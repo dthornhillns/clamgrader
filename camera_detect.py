@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+from tkinter import *
 import cv2
 import clam_grade
 import argparse
@@ -42,12 +43,6 @@ elif cameraID:
 
 stream=VideoStream(cap)
 
-# Loading label map
-# Label maps map indices to category names, so that when our convolution network predicts `5`, we know that this corresponds to `airplane`.  Here we use internal utility functions, but anything that returns a dictionary mapping integers to appropriate string labels would be fine
-#label_map = label_map_util.load_labelmap(labelsPath)
-#categories = label_map_util.convert_label_map_to_categories(
-#    label_map, max_num_classes=NUM_CLASSES, use_display_name=True)
-#category_index = label_map_util.create_category_index(categories)
 with open(labelsPath,"r") as labelFile:
     category_index=eval(labelFile.read())
 
