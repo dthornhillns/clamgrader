@@ -5,8 +5,7 @@ import cv2
 import clam_grade
 import argparse
 import time
-from video_stream import VideoStream
-from video_get import VideoGet
+import acapture
 
 
 parser = argparse.ArgumentParser()
@@ -39,11 +38,11 @@ dpsm=0
 cap=None
 
 if videoFile:
-    cap = cv2.VideoCapture(videoFile)
+    cap = acapture.AsyncVideo(videoFile)
 elif cameraID>=0:
-    cap = cv2.VideoCapture(cameraID)
+    cap = acapture.AsyncCamera(cameraID)
 
-stream=VideoGet(cap)
+stream=cap
 
 with open(labelsPath,"r") as labelFile:
     category_index=eval(labelFile.read())
@@ -131,21 +130,20 @@ isImage= not videoFile is None and (videoFile.endswith(".png") or videoFile.ends
 with tf.Session(graph=tf.Graph()) as sess:
     tf.saved_model.loader.load(sess, ['serve'], modelPath)
     detection_graph=tf.get_default_graph()
-    stream.start()
     startTime = time.time()
     fpsProcess=0
     frameCount=0
-    tensorFlowTime=0.000001
-    areaTime=0.000001
+    tensorFlowTime=0.1
+    areaTime=0.1
     while True:
         # Read frame from camera
-        image_np = stream.frame
+        _ret, image_np = stream.read()
         #print("Got Frame: %s", time.time())
         if image_np is not None:
-            tensorFlowStartTime = time.time()
+            #detectTime = time.time()
             if dpsm==0:
                 dpsm=image_np.shape[0]*image_np.shape[1]/real_area
-
+            image_np=cv2.cvtColor(image_np, cv2.COLOR_BGR2RGB)
             # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
             image_np_expanded = np.expand_dims(image_np, axis=0)
             # Extract image tensor
@@ -164,29 +162,22 @@ with tf.Session(graph=tf.Graph()) as sess:
                 [boxes, scores, classes, num_detections],
                 feed_dict={image_tensor: image_np_expanded})
 
-            areaStartTime = time.time()
+
             for i in range(len(boxes[0])):
                 if(scores[0,i]>MIN_SCORE):
                    clam_grade.grade(image_np,boxes[0,i],classes[0,i],scores[0,i],dpsm, imgAdjust)
 
             frameCount+=1
             stopTime = time.time()
-            tensorFlowTime+=areaStartTime-tensorFlowStartTime
-            areaTime+=stopTime-areaStartTime
-
             if (stopTime >= 0.250):
                 stop = time.time()
                 elapsed = stopTime - startTime
                 fpsProcess = frameCount / elapsed
                 frameCount = 0
+                #print("FPS Cap: %.1f    FPS Proc: %.1f" % (stream.fps, fpsProcess))
                 startTime = time.time()
-                totalTime=areaTime+tensorFlowTime
-                percentTensorFlow=(tensorFlowTime/totalTime)*100
-                percentArea=(areaTime/totalTime)*100
-                tensorFlowTime=0
-                areaTime=0
             # Display output
-            cv2.putText(image_np, "FPS Cap: %.1f    FPS Proc: %.1f  TensorFlow: %.1f    Area: %.1f" % (stream.fps, fpsProcess, percentTensorFlow, percentArea), (0,20), cv2.FONT_HERSHEY_PLAIN, fontScale=1, color=(255, 255, 0),
+            cv2.putText(image_np, "FPS Cap: %.1f    FPS Proc: %.1f" % (stream.fps, fpsProcess), (0,20), cv2.FONT_HERSHEY_PLAIN, fontScale=1, color=(255, 255, 0),
                        thickness=1)
             cv2.imshow('object detection', cv2.resize(image_np, (800, 600)))
 

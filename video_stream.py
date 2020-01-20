@@ -24,7 +24,6 @@ class VideoStream:
 
     def update(self):
         # keep looping infinitely
-        lastFrame = None
         while True:
             # if the thread indicator variable is set, stop the
             # thread
@@ -40,9 +39,6 @@ class VideoStream:
                 # reached the end of the video file
                 if not grabbed:
                     self.stream.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                    frame = lastFrame.copy()
-                else:
-                    lastFrame = frame.copy()
 
                 # add the frame to the queue
                 self.Q.put(frame)
