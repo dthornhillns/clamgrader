@@ -42,6 +42,9 @@ if videoFile:
     cap = cv2.VideoCapture(videoFile)
 elif cameraID>=0:
     cap = cv2.VideoCapture(cameraID)
+    cap.set(cv2.CAP_PROP_FPS, 30)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 533)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 300)
 
 stream=VideoGet(cap)
 
@@ -140,7 +143,7 @@ with tf.Session(graph=tf.Graph()) as sess:
     while True:
         # Read frame from camera
         image_np = stream.frame
-        #print("Got Frame: %s", time.time())
+        #print("Got Frame: %s" % (time.time()))
         if image_np is not None:
             tensorFlowStartTime = time.time()
             if dpsm==0:
@@ -164,10 +167,11 @@ with tf.Session(graph=tf.Graph()) as sess:
                 [boxes, scores, classes, num_detections],
                 feed_dict={image_tensor: image_np_expanded})
 
+            destImg = image_np.copy()
             areaStartTime = time.time()
             for i in range(len(boxes[0])):
                 if(scores[0,i]>MIN_SCORE):
-                   clam_grade.grade(image_np,boxes[0,i],classes[0,i],scores[0,i],dpsm, imgAdjust)
+                   clam_grade.grade(image_np,destImg,boxes[0,i],classes[0,i],scores[0,i],dpsm, imgAdjust)
 
             frameCount+=1
             stopTime = time.time()
@@ -186,9 +190,9 @@ with tf.Session(graph=tf.Graph()) as sess:
                 tensorFlowTime=0
                 areaTime=0
             # Display output
-            cv2.putText(image_np, "FPS Cap: %.1f    FPS Proc: %.1f  TensorFlow: %.1f    Area: %.1f" % (stream.fps, fpsProcess, percentTensorFlow, percentArea), (0,20), cv2.FONT_HERSHEY_PLAIN, fontScale=1, color=(255, 255, 0),
+            cv2.putText(destImg, "FPS Cap: %.1f    FPS Proc: %.1f  TensorFlow: %.1f    Area: %.1f" % (stream.fps, fpsProcess, percentTensorFlow, percentArea), (0,20), cv2.FONT_HERSHEY_PLAIN, fontScale=0.8, color=(255, 255, 0),
                        thickness=1)
-            cv2.imshow('object detection', cv2.resize(image_np, (800, 600)))
+            cv2.imshow('object detection', cv2.resize(destImg, (800, 600)))
 
             if not waitForKey(stream,imgAdjust):
                 break

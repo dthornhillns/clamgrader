@@ -19,15 +19,15 @@ class ImageAdjustment:
     withContours=True
 
 
-def grade(srcImg, box, category, score,  dpsm, imgAdjust):
+def grade(srcImg,destImg, box, category, score,  dpsm, imgAdjust):
     im_width = srcImg.shape[1]
     im_height = srcImg.shape[0]
-    tile_x1 = int(box[1]*im_width)
-    tile_y1 = int(box[0]*im_height)
-    tile_x2 = int(box[3]*im_width)
-    tile_y2 = int(box[2]*im_height)
+    tile_x1 = max(int(box[1]*im_width)-2,0)
+    tile_y1 = max(int(box[0]*im_height)-2,0)
+    tile_x2 = min(int(box[3]*im_width)+2,im_width)
+    tile_y2 = min(int(box[2]*im_height)+2,im_height)
 
-    objImg = srcImg[tile_y1:tile_y2, tile_x1:tile_x2]
+    objImg = srcImg[tile_y1:tile_y2, tile_x1:tile_x2].copy()
     imgArea= objImg.shape[0] * objImg.shape[1]
     max_acceptable_area=0.75*imgArea
 
@@ -69,18 +69,18 @@ def grade(srcImg, box, category, score,  dpsm, imgAdjust):
 
 
         obj_area=float(max_area) / float(dpsm)
-        areaStr="Area (mm): %.2f" % (obj_area)
+        areaStr="A: %.2f" % (obj_area)
         areaLabel_LL=(10,int(displayImg.shape[0]-10))
         displayImg = cv.putText(displayImg, areaStr,areaLabel_LL, cv.FONT_HERSHEY_PLAIN, fontScale=1, color=(255,255,0), thickness=1)
 
         if imgAdjust.withContours==True:
-            displayImg = cv.drawContours(displayImg, cnt, max_c, (255, 0, 0), 2)
+            displayImg = cv.drawContours(displayImg, cnt, max_c, (255, 0, 0), 1)
         #copy enhanced over original
-        srcImg[tile_y1:tile_y2, tile_x1:tile_x2]=displayImg
+        destImg[tile_y1:tile_y2, tile_x1:tile_x2]=displayImg
         #draw bounding box on original
-        cv.rectangle(srcImg,(tile_x1,tile_y1),(tile_x2,tile_y2),(0,255,255),2)
+        cv.rectangle(destImg,(tile_x1,tile_y1),(tile_x2,tile_y2),(0,255,255),1)
         #draw countour center target on original
-        cv.circle(srcImg,(tile_x1+cY, tile_y1+cY),20,(255,0,255),cv.FILLED)
+        cv.circle(destImg,(tile_x1+cY, tile_y1+cY),5,(255,0,255),cv.FILLED)
 
 
 

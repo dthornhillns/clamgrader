@@ -36,7 +36,7 @@ class VideoGet:
                     self.fps=frames/elapsed
                     frames=0
                     startTime = time.time()
-            time.sleep(0.001)
+            time.sleep(0.010)
 
     def stop(self):
         self.stopped = True
