@@ -230,7 +230,12 @@ with tf.Session(graph=tf.Graph()) as sess:
                           color=(16,16,16),thickness=imgAdjust.boxThickness)
             cv2.rectangle(destImg, fov.regionOfMeasurementPixels[0], fov.regionOfMeasurementPixels[1],
                           color=(16, 64, 64), thickness=imgAdjust.boxThickness, )
-            cv2.imshow('object detection', cv2.resize(destImg, (800, 600)))
+
+            w1=destImg.shape[1]
+            h1=destImg.shape[0]
+            w2=1600
+            h2=h1*w2/w1
+            cv2.imshow('object detection', cv2.resize(destImg, (int(w2),int(h2) )))
 
             if not waitForKey(stream,imgAdjust):
                 break
