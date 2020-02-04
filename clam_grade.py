@@ -121,7 +121,7 @@ def grade(isOfInterest,isOfMeasurement, boxCenter, srcImg, destImg, box, categor
         displayImg = cv.putText(displayImg, areaStr,areaLabel_LL, cv.FONT_HERSHEY_PLAIN, fontScale=imgAdjust.fontScale, color=(255,255,0), thickness=2)
 
         if imgAdjust.withContours==True and isOfMeasurement:
-            displayImg = cv.drawContours(displayImg, cnt, max_c, (255, 0, 0), 1)
+            displayImg = cv.drawContours(displayImg, cnt, max_c, (255, 0, 0), imgAdjust.boxThickness)
         #copy enhanced over original
         destImg[tile_y1:tile_y2, tile_x1:tile_x2]=displayImg
         #draw bounding box on original

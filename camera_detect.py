@@ -227,9 +227,9 @@ with tf.Session(graph=tf.Graph()) as sess:
             fov.regionOfMeasurementPixels = (rom_ul, rom_lr)
 
             cv2.rectangle(destImg,fov.regionOfInterestPixels[0],fov.regionOfInterestPixels[1],
-                          color=(16,16,16),thickness=1)
+                          color=(16,16,16),thickness=imgAdjust.boxThickness)
             cv2.rectangle(destImg, fov.regionOfMeasurementPixels[0], fov.regionOfMeasurementPixels[1],
-                          color=(16, 64, 64), thickness=1)
+                          color=(16, 64, 64), thickness=imgAdjust.boxThickness, )
             cv2.imshow('object detection', cv2.resize(destImg, (800, 600)))
 
             if not waitForKey(stream,imgAdjust):
