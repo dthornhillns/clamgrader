@@ -8,15 +8,24 @@ import time
 from video_stream import VideoStream
 from video_get import VideoGet
 
+class FieldOfView:
+    regionOfInterest=((0.1,0.1),(0.9,0.9))
+    regionOfMeasurement=((0.3,0.1),(0.7,0.9))
+    regionOfInterestPixels=((0,0),(100,100))
+    regionOfMeasurementPixels=((0,0),(100,100))
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-m","--model", required=True, help="Path to model")
 parser.add_argument("-l","--labels", required=True, help="Path to labels")
 parser.add_argument("-s","--minscore", type=float, help="Minumum score to filter", default=0.7)
+parser.add_argument("-b","--boxthickness", type=int, help="Line thickness of bounding box", default=1)
+parser.add_argument("-f","--fontScale", type=float, help="Font scale of all text", default=1.0)
 parser.add_argument("-W","--width", type=float, help="Real width in cm", required=True)
 parser.add_argument("-H","--height", type=float, help="Real height in cm", required=True)
 parser.add_argument("-c","--camera", type=int, help="Use Camera with ID", default=0, required=False)
 parser.add_argument("-v","--video", help="Use Video or JPG instead of Camera")
+parser.add_argument("-cr","--capturerate", type=float, help="Adjust capture rate", default=0.01, required=False)
 args=vars(parser.parse_args())
 # Path to frozen detection graph. This is the actual model that is used for the object detection.
 modelPath = args["model"]
@@ -31,12 +40,17 @@ real_width=args["width"]
 real_height=args["height"]
 videoFile=args["video"]
 cameraID=args["camera"]
+capRate=args["capturerate"]
 real_area=real_width*real_height
 
 imgAdjust=clam_grade.ImageAdjustment()
+imgAdjust.boxThickness=args["boxthickness"]
+imgAdjust.fontScale=args["fontScale"]
 dpsm=0
 
 cap=None
+
+fov=FieldOfView()
 
 if videoFile:
     cap = cv2.VideoCapture(videoFile)
@@ -46,7 +60,7 @@ elif cameraID>=0:
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 533)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 300)
 
-stream=VideoGet(cap)
+stream=VideoGet(cap, capRate)
 
 with open(labelsPath,"r") as labelFile:
     category_index=eval(labelFile.read())
@@ -80,29 +94,29 @@ def waitForKey(stream, imgAdjust):
     elif waitKey == ord('1'):
         imgAdjust.maxThreshold-=10
     elif waitKey == ord('f'):
-        imgAdjust.hue_H+=10
+        imgAdjust.surf_hue_H+=10
     elif waitKey == ord('g'):
-        imgAdjust.saturation_H+=10
+        imgAdjust.surf_saturation_H+=10
     elif waitKey == ord('h'):
-        imgAdjust.value_H+=10
+        imgAdjust.surf_value_H+=10
     elif waitKey == ord('v'):
-        imgAdjust.hue_H-=10
+        imgAdjust.surf_hue_H-=10
     elif waitKey == ord('b'):
-        imgAdjust.saturation_H-=10
+        imgAdjust.surf_saturation_H-=10
     elif waitKey == ord('n'):
-        imgAdjust.value_H-=10
+        imgAdjust.surf_value_H-=10
     elif waitKey == ord('j'):
-        imgAdjust.hue_L+=10
+        imgAdjust.surf_hue_L+=10
     elif waitKey == ord('k'):
-        imgAdjust.saturation_L+=10
+        imgAdjust.surf_saturation_L+=10
     elif waitKey == ord('l'):
-        imgAdjust.value_L+=10
+        imgAdjust.surf_value_L+=10
     elif waitKey == ord('m'):
-        imgAdjust.hue_L-=10
+        imgAdjust.surf_hue_L-=10
     elif waitKey == ord(','):
-        imgAdjust.saturation_L-=10
+        imgAdjust.surf_saturation_L-=10
     elif waitKey == ord('.'):
-        imgAdjust.value_L-=10
+        imgAdjust.surf_value_L-=10
     elif waitKey == ord('3'):
         imgAdjust.blur-=1
     elif waitKey == ord('4'):
@@ -171,7 +185,19 @@ with tf.Session(graph=tf.Graph()) as sess:
             areaStartTime = time.time()
             for i in range(len(boxes[0])):
                 if(scores[0,i]>MIN_SCORE):
-                   clam_grade.grade(image_np,destImg,boxes[0,i],classes[0,i],scores[0,i],dpsm, imgAdjust)
+                    box=boxes[0,i]
+                    width=box[2]-box[0]
+                    height=box[3]-box[1]
+                    boxCenter=(box[0]+(width/2),box[1]+(height/2))
+                    isOfInterest=(boxCenter[0]>fov.regionOfInterest[0][1] and
+                                    boxCenter[0] < fov.regionOfInterest[1][1] and
+                                    boxCenter[1]>fov.regionOfInterest[0][0] and
+                                    boxCenter[1]<fov.regionOfInterest[1][0])
+                    isOfMeasurement = (boxCenter[0] > fov.regionOfMeasurement[0][1] and
+                                    boxCenter[0] < fov.regionOfMeasurement[1][1] and
+                                    boxCenter[1] > fov.regionOfMeasurement[0][0] and
+                                    boxCenter[1] < fov.regionOfMeasurement[1][0])
+                    clam_grade.grade(isOfInterest,isOfMeasurement,boxCenter, image_np,destImg,boxes[0,i],classes[0,i],scores[0,i],dpsm, imgAdjust)
 
             frameCount+=1
             stopTime = time.time()
@@ -190,8 +216,20 @@ with tf.Session(graph=tf.Graph()) as sess:
                 tensorFlowTime=0
                 areaTime=0
             # Display output
-            cv2.putText(destImg, "FPS Cap: %.1f    FPS Proc: %.1f  TensorFlow: %.1f    Area: %.1f" % (stream.fps, fpsProcess, percentTensorFlow, percentArea), (0,20), cv2.FONT_HERSHEY_PLAIN, fontScale=0.8, color=(255, 255, 0),
+            cv2.putText(destImg, "FPS Cap: %.1f    FPS Proc: %.1f  TensorFlow: %.1f    Area: %.1f" % (stream.fps, fpsProcess, percentTensorFlow, percentArea), (0,20), cv2.FONT_HERSHEY_PLAIN, fontScale=imgAdjust.fontScale, color=(255, 255, 0),
                        thickness=1)
+
+            roi_ul = (int(fov.regionOfInterest[0][0] * destImg.shape[1]), int(fov.regionOfInterest[0][1] * destImg.shape[0]))
+            roi_lr = (int(fov.regionOfInterest[1][0] * destImg.shape[1]), int(fov.regionOfInterest[1][1] * destImg.shape[0]))
+            fov.regionOfInterestPixels = (roi_ul, roi_lr)
+            rom_ul = (int(fov.regionOfMeasurement[0][0] * destImg.shape[1]), int(fov.regionOfMeasurement[0][1] * destImg.shape[0]))
+            rom_lr = (int(fov.regionOfMeasurement[1][0] * destImg.shape[1]), int(fov.regionOfMeasurement[1][1] * destImg.shape[0]))
+            fov.regionOfMeasurementPixels = (rom_ul, rom_lr)
+
+            cv2.rectangle(destImg,fov.regionOfInterestPixels[0],fov.regionOfInterestPixels[1],
+                          color=(16,16,16),thickness=1)
+            cv2.rectangle(destImg, fov.regionOfMeasurementPixels[0], fov.regionOfMeasurementPixels[1],
+                          color=(16, 64, 64), thickness=1)
             cv2.imshow('object detection', cv2.resize(destImg, (800, 600)))
 
             if not waitForKey(stream,imgAdjust):

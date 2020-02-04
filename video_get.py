@@ -8,8 +8,9 @@ class VideoGet:
     with a dedicated thread.
     """
 
-    def __init__(self, cap):
+    def __init__(self, cap, capRate):
         self.stream = cap
+        self.capRate=capRate
         (self.grabbed, self.frame) = self.stream.read()
         self.stopped = False
         self.fps=0
@@ -36,7 +37,7 @@ class VideoGet:
                     self.fps=frames/elapsed
                     frames=0
                     startTime = time.time()
-            time.sleep(0.010)
+            time.sleep(self.capRate)
 
     def stop(self):
         self.stopped = True
