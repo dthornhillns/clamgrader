@@ -57,8 +57,8 @@ if videoFile:
 elif cameraID>=0:
     cap = cv2.VideoCapture(cameraID)
     cap.set(cv2.CAP_PROP_FPS, 30)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 533)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 300)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 stream=VideoGet(cap, capRate)
 
