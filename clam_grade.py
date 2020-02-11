@@ -26,6 +26,15 @@ class ImageAdjustment:
     surf_saturation_H = 255
     surf_value_H = 255
 
+class ClamTarget:
+    id=0
+    x=0
+    y=0
+    classification=0
+    areaPixel=0
+    areaSquareMm=0.0
+    isOfInterest=False
+    isOfMeasurement=False
 
 def grade(isOfInterest,isOfMeasurement, boxCenter, srcImg, destImg, box, category, score, dpsm, imgAdjust):
     im_width = srcImg.shape[1]
@@ -70,8 +79,8 @@ def grade(isOfInterest,isOfMeasurement, boxCenter, srcImg, destImg, box, categor
     elif imgAdjust.showEnhanced=="blur":
         displayImg = cv.cvtColor(enhancedBlur, cv.COLOR_GRAY2RGB)
 
-    surfRanges=0
     if(max_c>-1):
+        clamTarget=ClamTarget()
         M = cv.moments(cnt[max_c])
         cX = int(M["m10"] / M["m00"])
         cY = int(M["m01"] / M["m00"])
@@ -84,34 +93,23 @@ def grade(isOfInterest,isOfMeasurement, boxCenter, srcImg, destImg, box, categor
                 surfBw2 = cv.inRange(objImg, (180+imgAdjust.surf_hue_L, imgAdjust.surf_saturation_L, imgAdjust.surf_value_L),
                                      (180, imgAdjust.surf_saturation_H, imgAdjust.surf_value_H))
                 surfBw=surfBw1|surfBw2
-                surfRanges=2
-                #print("(%d) (%d %d %d) (%d %d %d) | (%d %d %d) (%d %d %d)" % (
-                #surfRanges, 0, imgAdjust.surf_saturation_L, imgAdjust.surf_value_L,
-                #imgAdjust.surf_hue_H, imgAdjust.surf_saturation_H, imgAdjust.surf_value_H,
-                #180+imgAdjust.surf_hue_L, imgAdjust.surf_saturation_L, imgAdjust.surf_value_L,
-                #180, imgAdjust.surf_saturation_H, imgAdjust.surf_value_H))
 
             else:
                 surfBw = cv.inRange(objImg, (imgAdjust.surf_saturation_L, imgAdjust.surf_saturation_L, imgAdjust.surf_value_L),
                                      (imgAdjust.surf_hue_H, imgAdjust.surf_saturation_H, imgAdjust.surf_value_H))
-                surfRanges = 1
-                #print("(%d) (%d %d %d) (%d %d %d)" % (surfRanges, imgAdjust.surf_saturation_L, imgAdjust.surf_saturation_L, imgAdjust.surf_value_L,
-                #                                      imgAdjust.surf_hue_H, imgAdjust.surf_saturation_H, imgAdjust.surf_value_H))
 
 
 
-            # surfBlur = cv.GaussianBlur(surfThreshold, (imgAdjust.blur, imgAdjust.blur), 0)
-            # surfCnts, _ = cv.findContours(surfBlur, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE)
+
             redCount = cv.countNonZero(surfBw)
             boxPixels=objImg.shape[0]*objImg.shape[1]
             percentRed=redCount/boxPixels
-            #displayImg = cv.cvtColor(surfBw, cv.COLOR_GRAY2RGB)
+
 
             if(percentRed>0.10):
                 category=2.0
             else:
                 category=1.0
-
 
         boxColor = (32,32,32) if not isOfInterest else (255, 255, 0) if category == 2.0 else (0, 255, 255)
 
@@ -129,8 +127,20 @@ def grade(isOfInterest,isOfMeasurement, boxCenter, srcImg, destImg, box, categor
         #draw countour center target on original
         cv.circle(destImg,(tile_x1+cY, tile_y1+cY),5,(255,0,255),cv.FILLED)
 
-        center=(int(boxCenter[1] * im_width),int(boxCenter[0]*im_height))
+        pixelCenter_X=int(boxCenter[1] * im_width)
+        pixelCenter_Y = int(boxCenter[0]*im_height)
+        center=(pixelCenter_X, pixelCenter_Y)
         cv.circle(destImg,center,3,boxColor,cv.FILLED)
+
+        clamTarget.classification=int(category)
+        clamTarget.x=pixelCenter_X
+        clamTarget.y=pixelCenter_Y
+        clamTarget.areaSquareMm=obj_area
+        clamTarget.areaPixel=max_area
+        clamTarget.isOfInterest=isOfInterest
+        clamTarget.isOfMeasurement=isOfMeasurement
+
+        return clamTarget
 
 
 

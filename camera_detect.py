@@ -5,7 +5,7 @@ import cv2
 import clam_grade
 import argparse
 import time
-from video_stream import VideoStream
+import plc_integration
 from video_get import VideoGet
 
 class FieldOfView:
@@ -42,6 +42,10 @@ videoFile=args["video"]
 cameraID=args["camera"]
 capRate=args["capturerate"]
 real_area=real_width*real_height
+plcPollTime=0.001
+plcIp="192.168.3.10"
+plcDestNode=10
+plcSrcNode=25
 
 imgAdjust=clam_grade.ImageAdjustment()
 imgAdjust.boxThickness=args["boxthickness"]
@@ -65,6 +69,8 @@ stream=VideoGet(cap, capRate)
 with open(labelsPath,"r") as labelFile:
     category_index=eval(labelFile.read())
 
+plc= plc_integration.PlcIntegration(0.001, plcIp, plcDestNode, plcSrcNode)
+
 # Helper code
 def load_image_into_numpy_array(image):
     (im_width, im_height) = image.size
@@ -75,6 +81,7 @@ def waitForKey(stream, imgAdjust):
     waitKey=  cv2.waitKey(1) & 0xFF
     if  waitKey == ord('*'):
         stream.stop()
+        plc.stop()
         cv2.destroyAllWindows()
         return False
     elif waitKey == ord('x'):
@@ -144,6 +151,9 @@ def waitForKey(stream, imgAdjust):
 
 
 isImage= not videoFile is None and (videoFile.endswith(".png") or videoFile.endswith(".jpg"))
+
+plc.start()
+
 # Detection
 with tf.Session(graph=tf.Graph()) as sess:
     tf.saved_model.loader.load(sess, ['serve'], modelPath)
@@ -159,6 +169,7 @@ with tf.Session(graph=tf.Graph()) as sess:
         image_np = stream.frame
         #print("Got Frame: %s" % (time.time()))
         if image_np is not None:
+            targets=[]
             tensorFlowStartTime = time.time()
             if dpsm==0:
                 dpsm=image_np.shape[0]*image_np.shape[1]/real_area
@@ -197,7 +208,10 @@ with tf.Session(graph=tf.Graph()) as sess:
                                     boxCenter[0] < fov.regionOfMeasurement[1][1] and
                                     boxCenter[1] > fov.regionOfMeasurement[0][0] and
                                     boxCenter[1] < fov.regionOfMeasurement[1][0])
-                    clam_grade.grade(isOfInterest,isOfMeasurement,boxCenter, image_np,destImg,boxes[0,i],classes[0,i],scores[0,i],dpsm, imgAdjust)
+                    target=clam_grade.grade(isOfInterest,isOfMeasurement,boxCenter, image_np,destImg,boxes[0,i],classes[0,i],scores[0,i],dpsm, imgAdjust)
+                    if not target is None:
+                        if target.isOfInterest:
+                            targets.append(target)
 
             frameCount+=1
             stopTime = time.time()
@@ -236,6 +250,8 @@ with tf.Session(graph=tf.Graph()) as sess:
             w2=1600
             h2=h1*w2/w1
             cv2.imshow('object detection', cv2.resize(destImg, (int(w2),int(h2) )))
+            if plc.targetsRequested and len(targets)>0:
+                plc.sendTargets(targets)
 
             if not waitForKey(stream,imgAdjust):
                 break
