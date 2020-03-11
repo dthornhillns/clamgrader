@@ -42,9 +42,9 @@ videoFile=args["video"]
 cameraID=args["camera"]
 capRate=args["capturerate"]
 real_area=real_width*real_height
-plcPollTime=0.001
-plcIp="192.168.3.10"
-plcDestNode=10
+plcPollTime=0.01
+plcIp="192.168.0.121"
+plcDestNode=121
 plcSrcNode=25
 
 imgAdjust=clam_grade.ImageAdjustment()
@@ -251,6 +251,7 @@ with tf.Session(graph=tf.Graph()) as sess:
             h2=h1*w2/w1
             cv2.imshow('object detection', cv2.resize(destImg, (int(w2),int(h2) )))
             if plc.targetsRequested and len(targets)>0:
+                print("%s: Sending %d targets" %(time.time(),len(targets)))
                 plc.sendTargets(targets)
 
             if not waitForKey(stream,imgAdjust):

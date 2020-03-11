@@ -30,9 +30,10 @@ class PlcIntegration:
         self.stopped = True
 
     def isPlcRequestingTargets(self):
-        #mem_area = self.finsInstance.memory_area_read(fins.FinsPLCMemoryAreas().DATA_MEMORY_WORD, b'\x00\x00\xc8', 1)
-        #return bool(mem_area)
-        return True
+        mem_area = self.finsInstance.memory_area_read(fins.FinsPLCMemoryAreas().DATA_MEMORY_WORD, b'\x00\xc8\x00', 1)
+        print("%d %s" %(int(mem_area[15]),bool(mem_area[15])))
+        return bool(mem_area[15])
+        #return False
 
     def sendTargets(self, clamTargets):
         buffer = bytearray()
