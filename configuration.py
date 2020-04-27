@@ -2,6 +2,7 @@ import json
 
 class DetectionConfig:
     def __init__(self):
+        self.diagnosticsPort = 5000
         self.contrast = 0
         self.brightness = 0
         self.minThreshold = 30
@@ -50,6 +51,7 @@ def loadConfig(path):
     config = DetectionConfig()
     jsonFile = open(path,"r")
     jsonDict = json.load(jsonFile)
+    config.diagnosticsPort = jsonDict["diagnosticsPort"]
     config.contrast = jsonDict["contrast"]
     config.brightness = jsonDict["brightness"]
     config.minThreshold = jsonDict["minThreshold"]

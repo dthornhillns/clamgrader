@@ -122,6 +122,7 @@ args = vars(parser.parse_args())
 
 configFile = args["config"]
 noDisplay = args["nodisplay"]
+config = cfg.loadConfig(configFile)
 app=Flask(__name__, template_folder="/home/mark/projects/Clam_Grader/templates")
 
 @app.route("/")
@@ -140,16 +141,15 @@ class FieldOfView:
     regionOfInterestPixels = ((0, 0), (100, 100))
     regionOfMeasurementPixels = ((0, 0), (100, 100))
 
-def startFlask():
-    app.run(host="0.0.0.0", port=5000, debug=True,
+def startFlask(config):
+    app.run(host="0.0.0.0", port=config.diagnosticsPort, debug=False,
             threaded=True, use_reloader=False)
 
 def detect():
     print("Initializing detection")
 
-    global outputFrame, lock
+    global outputFrame, lock, config
 
-    config = cfg.loadConfig(configFile)
     dpsm = 0
     cap = None
     plc = None
@@ -297,7 +297,7 @@ def detect():
 if (noDisplay):
     print("noDisplay is on")
     threading.Thread(target=detect).start()
-    startFlask()
+    startFlask(config)
 else:
     print("noDisplay is off")
     detect()

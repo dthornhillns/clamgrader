@@ -1,4 +1,5 @@
 {
+  "diagnosticsPort": 5000,
   "contrast": 0,
   "brightness": 0,
   "minThreshold": 30,
