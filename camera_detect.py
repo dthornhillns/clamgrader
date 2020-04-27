@@ -123,7 +123,7 @@ args = vars(parser.parse_args())
 configFile = args["config"]
 noDisplay = args["nodisplay"]
 config = cfg.loadConfig(configFile)
-app=Flask(__name__, template_folder="/home/mark/projects/Clam_Grader/templates")
+app=Flask(__name__)
 
 @app.route("/")
 def index():
