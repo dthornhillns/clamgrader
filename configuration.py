@@ -19,6 +19,7 @@ class DetectionConfig:
         self.withContours = True
         self.boxThickness = 1
         self.fontScale = 1
+        self.surf_red_percent = 7.0
         self.surf_hue_L = 5
         self.surf_saturation_L = 5
         self.surf_value_L = 69
@@ -65,6 +66,13 @@ def loadConfig(path):
     config.hue_H = jsonDict["hue_H"]
     config.saturation_H = jsonDict["saturation_H"]
     config.value_H = jsonDict["value_H"]
+    config.surf_red_percent = jsonDict["surf_red_percent"]
+    config.surf_hue_L = jsonDict["surf_hue_L"]
+    config.surf_saturation_L = jsonDict["surf_saturation_L"]
+    config.surf_value_L = jsonDict["surf_value_L"]
+    config.surf_hue_H = jsonDict["surf_hue_H"]
+    config.surf_saturation_H = jsonDict["surf_saturation_H"]
+    config.surf_value_H = jsonDict["surf_value_H"]
     config.modelPath = jsonDict["modelPath"]
     config.labelsPath = jsonDict["labelsPath"]
     config.min_score = jsonDict["min_score"]
@@ -78,6 +86,7 @@ def loadConfig(path):
     config.capRate = jsonDict["capRate"]
     config.plcPollTime = jsonDict["plcPollTime"]
     config.plcIp = jsonDict["plcIp"]
+    config.plcDestNode = jsonDict["plcDestNode"]
     config.plcSrcNode = jsonDict["plcSrcNode"]
     config.plcEnabled = jsonDict["plcEnabled"]
     config.windowWidth = jsonDict["windowWidth"]
