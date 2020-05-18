@@ -1,4 +1,5 @@
 import numpy as np
+import math
 import tensorflow as tf
 from flask import Response
 from flask import Flask
@@ -145,6 +146,38 @@ def startFlask(config):
     app.run(host="0.0.0.0", port=config.diagnosticsPort, debug=False,
             threaded=True, use_reloader=False)
 
+def calculateDistance(p1,p2):
+    dist = math.sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2)
+    return dist
+
+def pruneBoxes(boxes, scores, config):
+    centers = []
+    prunedBoxes = []
+    threshold=config.doubleTargetThreshold
+    for i in range(len(boxes)):
+        if(scores[i]>=config.min_score):
+            box=boxes[i]
+            width = box[2] - box[0]
+            height = box[3] - box[1]
+            center = (box[0] + (width / 2), box[1] + (height / 2))
+            centers.append((i,center))
+
+    for i in range(len(boxes)):
+        if (scores[i] >= config.min_score):
+            currentBoxCenter=centers[i][1]
+            addBox=True
+            for c in centers:
+                if c[0]!=i:
+                    distance=abs(calculateDistance(c[1], currentBoxCenter))
+                    if(distance<threshold):
+                        addBox=False
+                        print("Double target found! %f" % distance)
+                        break
+            if addBox:
+                prunedBoxes.append(i)
+
+    return prunedBoxes
+
 def detect():
     print("Initializing detection")
 
@@ -218,8 +251,10 @@ def detect():
                     feed_dict={image_tensor: image_np_expanded})
 
                 destImg = image_np.copy()
+                radius = int(destImg.shape[1] * config.doubleTargetThreshold)
                 areaStartTime = time.time()
-                for i in range(len(boxes[0])):
+                prunedBoxes=pruneBoxes(boxes[0],scores[0], config)
+                for i in prunedBoxes:
                     if (scores[0, i] > config.min_score):
                         box = boxes[0, i]
                         width = box[2] - box[0]
@@ -236,6 +271,7 @@ def detect():
                         target = clam_grade.grade(isOfInterest, isOfMeasurement, boxCenter, image_np, destImg, boxes[0, i],
                                                   classes[0, i], scores[0, i], dpsm, config)
                         if not target is None:
+                            cv2.circle(destImg, (target.x, target.y), radius, (0, 255, 0), thickness=1)
                             if target.isOfInterest:
                                 targets.append(target)
 
