@@ -72,7 +72,7 @@ def grade(isOfInterest, isOfMeasurement, boxCenter, srcImg, destImg, box, catego
                 surfBw=surfBw1|surfBw2
 
             else:
-                surfBw = cv.inRange(objImg, (config.surf_saturation_L, config.surf_saturation_L, config.surf_value_L),
+                surfBw = cv.inRange(objImg, (config.surf_hue_L, config.surf_saturation_L, config.surf_value_L),
                                     (config.surf_hue_H, config.surf_saturation_H, config.surf_value_H))
 
 
@@ -81,9 +81,10 @@ def grade(isOfInterest, isOfMeasurement, boxCenter, srcImg, destImg, box, catego
             redCount = cv.countNonZero(surfBw)
             boxPixels=objImg.shape[0]*objImg.shape[1]
             percentRed=redCount/boxPixels
+            if config.showEnhanced == "isSurf":
+                displayImg = cv.cvtColor(surfBw, cv.COLOR_GRAY2RGB)
 
-
-            if(percentRed>0.10):
+            if(percentRed>0.06):
                 category=2.0
             else:
                 category=1.0

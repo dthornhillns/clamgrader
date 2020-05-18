@@ -14,7 +14,7 @@ class UDPFinsConnection(FinsConnection):
         super().__init__()
         self.BUFFER_SIZE=4096
         self.fins_socket=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-        self.ip_address='192.168.250.1'
+        self.ip_address='192.168.251.1'
         self.fins_port=None
 
     def execute_fins_command_frame(self,fins_command_frame):
