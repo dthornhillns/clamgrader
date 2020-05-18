@@ -47,6 +47,7 @@ class DetectionConfig:
         self.windowWidth = 1600
         self.regionOfInterest = None
         self.regionOfMeasurement = None
+        self.doubleTargetThreshold=0.01
 
 def loadConfig(path):
     config = DetectionConfig()
@@ -92,4 +93,5 @@ def loadConfig(path):
     config.windowWidth = jsonDict["windowWidth"]
     config.regionOfInterest = jsonDict["regionOfInterest"]
     config.regionOfMeasurement = jsonDict["regionOfMeasurement"]
+    config.doubleTargetThreshold = jsonDict["doubleTargetThreshold"]
     return config
