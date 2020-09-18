@@ -1,11 +1,200 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1">
     <title>Camera Grader Diagnostics</title>
+    <style>
+        .slidecontainer {
+  width: 100%; /* Width of the outside container */
+}
+
+/* The slider itself */
+.slider {
+  -webkit-appearance: none;  /* Override default CSS styles */
+  appearance: none;
+  width: 100%; /* Full-width */
+  height: 25px; /* Specified height */
+  background: #d3d3d3; /* Grey background */
+  outline: none; /* Remove outline */
+  opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+  -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+  transition: opacity .2s;
+}
+
+/* Mouse-over effects */
+.slider:hover {
+  opacity: 1; /* Fully shown on mouse-over */
+}
+
+/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none; /* Override default look */
+  appearance: none;
+  width: 25px; /* Set a specific slider handle width */
+  height: 25px; /* Slider handle height */
+  background: #4CAF50; /* Green background */
+  cursor: pointer; /* Cursor on hover */
+}
+
+.slider::-moz-range-thumb {
+  width: 25px; /* Set a specific slider handle width */
+  height: 25px; /* Slider handle height */
+  background: #4CAF50; /* Green background */
+  cursor: pointer; /* Cursor on hover */
+}
+
+.btn-group button {
+  background-color: #4CAF50; /* Green background */
+  border: 1px solid green; /* Green border */
+  color: white; /* White text */
+  padding: 10px 24px; /* Some padding */
+  cursor: pointer; /* Pointer/hand icon */
+  float: left; /* Float the buttons side by side */
+}
+
+.btn-group button:not(:last-child) {
+  border-right: none; /* Prevent double borders */
+}
+
+/* Clear floats (clearfix hack) */
+.btn-group:after {
+  content: "";
+  clear: both;
+  display: table;
+}
+
+/* Add a background color on hover */
+.btn-group button:hover {
+  background-color: #3e8e41;
+}
+
+.imageCell {
+    width: 50%;
+    text-align: center;
+}
+.sliderLabel {
+    width: 130px;
+    text-align: right;
+}
+    </style>
 </head>
 <body>
     <h1>Camera Grader Diagnostics</h1>
-    <img src="{{ url_for('video_feed') }}">
+    <div class="slidecontainer">
+        <table width="100%">
+            <tr>
+                <td rowspan="7" class="imageCell"><img width="100%" align="center" src="{{ url_for('video_feed') }}"></td>
+                <td class="sliderLabel">Hue LOW (<span id="hue_L_val">{{hue_L}}</span>)</td>
+                <td><input type="range" min="-255" max="255" value="{{hue_L}}" class="slider" id="hue_L"></td>
+            </tr>
+            <tr>
+                <td class="sliderLabel">Hue HIGH (<span id="hue_H_val">{{hue_H}}</span>)</td>
+                <td><input type="range" min="-255" max="255" value="{{hue_H}}" class="slider" id="hue_H"></td>
+            </tr>
+            <tr>
+                <td class="sliderLabel">Sat LOW (<span id="saturation_L_val">{{saturation_L}}</span>)</td>
+                <td><input type="range" min="1" max="255" value="{{saturation_L}}" class="slider" id="saturation_L"></td>
+            </tr>
+            <tr>
+                <td class="sliderLabel">Sat HIGH (<span id="saturation_H_val">{{saturation_H}}</span>)</td>
+                <td><input type="range" min="1" max="255" value="{{saturation_H}}" class="slider" id="saturation_H"></td>
+            </tr>
+            <tr>
+                <td class="sliderLabel">Val LOW (<span id="value_L_val">{{value_L}}</span>)</td>
+                <td><input type="range" min="1" max="255" value="{{value_L}}" class="slider" id="value_L"></td>
+            </tr>
+            <tr>
+                <td class="sliderLabel">Val HIGH (<span id="value_H_val">{{value_H}}</span>)</td>
+                <td><input type="range" min="1" max="255" value="{{value_H}}" class="slider" id="value_H"></td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <div class="btn-group">
+                        <button onclick="setImage(0)">Original</button>
+                        <button onclick="setImage(1)">Hue</button>
+                        <button onclick="setImage(2)">Threshold</button>
+                        <button onclick="setImage(3)">Blur</button>
+                    </div>
+                </td>
+                <td>
+                    <div class="btn-group">
+                        <button onclick="save()">Save Config</button>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+    </div>
 </body>
+<script>
+    var slider_hue_L = document.getElementById("hue_L");
+    var slider_hue_H = document.getElementById("hue_H");
+    var slider_saturation_L = document.getElementById("saturation_L");
+    var slider_saturation_H = document.getElementById("saturation_H");
+    var slider_value_L = document.getElementById("value_L");
+    var slider_value_H = document.getElementById("value_H");
+    var hue_L_output=document.getElementById("hue_L_val");
+    var hue_H_output=document.getElementById("hue_H_val");
+    var saturation_L_output=document.getElementById("saturation_L_val");
+    var saturation_H_output=document.getElementById("saturation_H_val");
+    var value_L_output=document.getElementById("value_L_val");
+    var value_H_output=document.getElementById("value_H_val");
+    var displayImage=0;
+
+    slider_hue_L.oninput = function() {
+        hue_L_output.innerHTML=this.value;
+        sendConfig();
+    }
+
+    slider_hue_H.oninput = function() {
+        hue_H_output.innerHTML=this.value;
+        sendConfig();
+    }
+
+    slider_saturation_L.oninput = function() {
+        saturation_L_output.innerHTML=this.value;
+        sendConfig();
+    }
+
+    slider_saturation_H.oninput = function() {
+        saturation_H_output.innerHTML=this.value;
+        sendConfig();
+    }
+
+    slider_value_L.oninput = function() {
+        value_L_output.innerHTML=this.value;
+        sendConfig();
+    }
+
+    slider_value_H.oninput = function() {
+        value_H_output.innerHTML=this.value;
+        sendConfig();
+    }
+    function setImage(imgIndex) {
+        displayImage=imgIndex;
+        sendConfig()
+    }
+
+    function sendConfig() {
+        let xhr = new XMLHttpRequest();
+        xhr.open("PUT", "config", true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        var data = JSON.stringify({
+            "hue_L": parseInt(slider_hue_L.value),
+            "hue_H": parseInt(slider_hue_H.value),
+            "saturation_L": parseInt(slider_saturation_L.value),
+            "saturation_H": parseInt(slider_saturation_H.value),
+            "value_L": parseInt(slider_value_L.value),
+            "value_H": parseInt(slider_value_H.value),
+            "showEnhanced": displayImage
+        });
+        xhr.send(data);
+    }
+
+    function save() {
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST", "config", true);
+        xhr.send();
+    }
+</script>
 </html>

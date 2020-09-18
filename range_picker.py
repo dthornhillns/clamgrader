@@ -75,10 +75,14 @@ parser = argparse.ArgumentParser(description='Code for Thresholding Operations u
 parser.add_argument('--camera', help='Camera divide number.', default=0, type=int)
 parser.add_argument('--image', help='Image File', required=False)
 args = parser.parse_args()
-cap = cv.VideoCapture(0)
-cap.set(cv.CAP_PROP_FPS, 30)
-cap.set(cv.CAP_PROP_FRAME_WIDTH, 640)
-cap.set(cv.CAP_PROP_FRAME_HEIGHT, 480)
+
+if args.image:
+    cap = cv.VideoCapture(args.image)
+else:
+    cap = cv.VideoCapture(args.camera)
+    cap.set(cv.CAP_PROP_FPS, 30)
+    cap.set(cv.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv.CAP_PROP_FRAME_HEIGHT, 480)
 time.sleep(2)
 cv.namedWindow(window_capture_name)
 cv.namedWindow(window_detection_name)
