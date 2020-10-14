@@ -31,69 +31,6 @@ def waitForKey(stream, config, plc):
             plc.stop()
         cv2.destroyAllWindows()
         return False
-    elif waitKey == ord('x'):
-        config.contrast += 10
-    elif waitKey == ord('z'):
-        config.contrast -= 10
-    elif waitKey == ord('s'):
-        config.brightness += 10
-    elif waitKey == ord('a'):
-        config.brightness -= 10
-    elif waitKey == ord('w'):
-        config.minThreshold += 10
-    elif waitKey == ord('q'):
-        config.minThreshold -= 10
-    elif waitKey == ord('2'):
-        config.maxThreshold += 10
-    elif waitKey == ord('1'):
-        config.maxThreshold -= 10
-    elif waitKey == ord('f'):
-        config.surf_hue_H += 10
-    elif waitKey == ord('g'):
-        config.surf_saturation_H += 10
-    elif waitKey == ord('h'):
-        config.surf_value_H += 10
-    elif waitKey == ord('v'):
-        config.surf_hue_H -= 10
-    elif waitKey == ord('b'):
-        config.surf_saturation_H -= 10
-    elif waitKey == ord('n'):
-        config.surf_value_H -= 10
-    elif waitKey == ord('j'):
-        config.surf_hue_L += 10
-    elif waitKey == ord('k'):
-        config.surf_saturation_L += 10
-    elif waitKey == ord('l'):
-        config.surf_value_L += 10
-    elif waitKey == ord('m'):
-        config.surf_hue_L -= 10
-    elif waitKey == ord(','):
-        config.surf_saturation_L -= 10
-    elif waitKey == ord('.'):
-        config.surf_value_L -= 10
-    elif waitKey == ord('3'):
-        config.blur -= 1
-    elif waitKey == ord('4'):
-        config.blur += 1
-    elif waitKey == ord('u'):
-        config.showEnhanced = 0
-    elif waitKey == ord('i'):
-        config.showEnhanced = 1
-    elif waitKey == ord('o'):
-        config.showEnhanced = 2
-    elif waitKey == ord('p'):
-        config.showEnhanced = 3
-    elif waitKey == ord('7'):
-        config.channel = 0
-    elif waitKey == ord('8'):
-        config.channel = 1
-    elif waitKey == ord('9'):
-        config.channel = 2
-    elif waitKey == ord('0'):
-        config.channel = -1
-    elif waitKey == ord(' '):
-        config.withContours ^= True
-
     return True
 
 def generate():
