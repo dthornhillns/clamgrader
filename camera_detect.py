@@ -190,8 +190,6 @@ def detect():
 
     stream = VideoGet(cap, config.capRate)
 
-    #with open(config.labelsPath, "r") as labelFile:
-    #    category_index = eval(labelFile.read())
 
     if config.plcEnabled:
         plc = plc_integration.PlcIntegration(0.001, config.plcIp, config.plcDestNode, config.plcSrcNode)
