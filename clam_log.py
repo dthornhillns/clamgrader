@@ -12,7 +12,7 @@ def write_clam(config, target):
         "minRange": target.minRange,
         "maxRange": target.maxRange
     }
-    requests.post("http://192.168.2.92:9200/clamsize/_doc",json=saveTarget)
+    requests.post(config.elasticsearch,json=saveTarget)
 
 
 

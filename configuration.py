@@ -7,7 +7,7 @@ class SizeClass:
 
 class DetectionConfig:
     def __init__(self):
-        self.sqlConnectString = ""
+        self.elasticsearch = ""
         self.diagnosticsPort = 5000
         self.contrast = 0
         self.brightness = 0
@@ -60,7 +60,7 @@ class DetectionConfig:
     def save(self, path):
         jsonFile = open(path, "w")
         data= {
-            "sqlConnectString":self.sqlConnectString,
+            "elasticsearch":self.elasticsearch,
             "diagnosticsPort": self.diagnosticsPort,
             "contrast": self.contrast,
             "brightness": self.brightness,
@@ -112,7 +112,7 @@ def loadConfig(path):
     config = DetectionConfig()
     jsonFile = open(path,"r")
     jsonDict = json.load(jsonFile)
-    config.sqlConnectString = jsonDict["sqlConnectString"]
+    config.elasticsearch = jsonDict["elasticsearch"]
     config.diagnosticsPort = jsonDict["diagnosticsPort"]
     config.contrast = jsonDict["contrast"]
     config.brightness = jsonDict["brightness"]

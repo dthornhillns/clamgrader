@@ -1,5 +1,5 @@
 {
-  "sqlConnectString": "Driver={ODBC Driver 17 for SQL Server};Server=192.168.2.56;Database=CLAMSIZE;UID=clamsize;PWD=Lobmaster123",
+  "elasticsearch": "http://192.168.2.92:9200/clamsize/_doc",
   "diagnosticsPort": 5000,
   "contrast": 0,
   "brightness": 0,
