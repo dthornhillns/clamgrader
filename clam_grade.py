@@ -1,4 +1,5 @@
 import cv2 as cv
+import numpy as np
 import PIL
 
 
@@ -12,13 +13,19 @@ class ClamTarget:
     areaSquareMm=0.0
     isOfInterest=False
     isOfMeasurement=False
-    percentRed=0.0
+    percentRed=0.0,
+    sizeGrade="unknown"
+    minRange=0.0,
+    maxRange=10000.0
 
-def preprocess(objImg, config):
+def preprocess(origImage, config):
 
-    convert = objImg
-
-    hueImage = cv.cvtColor(convert, cv.COLOR_BGR2HSV)
+    roi=config.regionOfInterest
+    roip=((int)(roi[0] * origImage.shape[1]), (int)(roi[1] * origImage.shape[0]), (int)(roi[2] * origImage.shape[1]), (int)(roi[3] * origImage.shape[0]))
+    blkImage = np.zeros(shape=origImage.shape, dtype=np.uint8)
+    safeImage= origImage[roip[1]:roip[3], roip[0]:roip[2]]
+    blkImage[roip[1]:roip[3],roip[0]:roip[2]]=safeImage
+    hueImage = cv.cvtColor(blkImage, cv.COLOR_BGR2HSV)
     enhancedBw = cv.inRange(hueImage, (config.hue_L, config.saturation_L, config.value_L),
                             (config.hue_H, config.saturation_H, config.value_H))
 
@@ -27,7 +34,7 @@ def preprocess(objImg, config):
 
     enhancedBlur = cv.GaussianBlur(enhancedThreshold, (config.blur, config.blur), 0)
 
-    return (objImg, hueImage, enhancedBw, enhancedThreshold,enhancedBlur)
+    return (origImage, blkImage, hueImage, enhancedBw, enhancedThreshold,enhancedBlur,safeImage)
 
 def grade(isOfInterest, isOfMeasurement, boxCenter, srcImg, destImg, box, dpsm, config):
     im_width = srcImg.shape[1]
@@ -36,22 +43,25 @@ def grade(isOfInterest, isOfMeasurement, boxCenter, srcImg, destImg, box, dpsm, 
     tile_y1 = max(int(box[1])-2,0)
     tile_x2 = min(int(box[2]+box[0])+2,im_width)
     tile_y2 = min(int(box[3]+box[1])+2,im_height)
-
+    safe_w=(config.regionOfInterest[0]-config.regionOfInterest[2])*im_width
+    safe_h=(config.regionOfInterest[1]-config.regionOfInterest[3])*im_height
+    safeArea=(int)(safe_w*safe_h)
     objImg = srcImg[tile_y1:tile_y2, tile_x1:tile_x2].copy()
-    imgArea= objImg.shape[0] * objImg.shape[1]
-    max_acceptable_area=0.75*imgArea
-
+    objImageArea= objImg.shape[0] * objImg.shape[1]
+    max_acceptable_area=0.75*objImageArea
     imgSteps = preprocess(objImg, config)
 
     cnt, _ = cv.findContours(imgSteps[3],cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE)
 
     max_c=-1
     max_area=0
-    for i in range(len(cnt)):
-        area = cv.contourArea(cnt[i])
-        if(area>max_area and area<=max_acceptable_area):
-            max_area=area
-            max_c=i
+
+    if(safeArea*0.75>objImageArea):
+        for i in range(len(cnt)):
+            area = cv.contourArea(cnt[i])
+            if(area>max_area and area<=max_acceptable_area):
+                max_area=area
+                max_c=i
     displayImg=objImg
     if config.showEnhanced== "threshold":
         displayImg= cv.cvtColor(imgSteps[0], cv.COLOR_GRAY2RGB)
@@ -108,6 +118,16 @@ def grade(isOfInterest, isOfMeasurement, boxCenter, srcImg, destImg, box, dpsm, 
         clamTarget.isOfMeasurement=isOfMeasurement
         clamTarget.box=box
         clamTarget.percentRed=percentRed
+        if clamTarget.classification==2.0:
+            maxRange=1000000.0
+            for size in config.surfSizes:
+                if size.min<clamTarget.areaSquareMm:
+                    clamTarget.minRange=size.min
+                    clamTarget.maxRange=maxRange
+                    clamTarget.sizeGrade=size.name
+                    break
+                else:
+                    maxRange=size.min
 
         return clamTarget
 

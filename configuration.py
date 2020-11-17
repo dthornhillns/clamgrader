@@ -1,5 +1,10 @@
 import json
 
+class SizeClass:
+    def __init__(self, name, min):
+        self.name = name
+        self.min = min
+
 class DetectionConfig:
     def __init__(self):
         self.sqlConnectString = ""
@@ -48,7 +53,9 @@ class DetectionConfig:
         self.windowWidth = 1600
         self.regionOfInterest = None
         self.regionOfMeasurement = None
-        self.doubleTargetThreshold=0.01
+        self.doubleTargetThreshold=0.01,
+        self.surfSizesFile = None
+        self.surfSizes = [];
 
     def save(self, path):
         jsonFile = open(path, "w")
@@ -90,7 +97,8 @@ class DetectionConfig:
             "windowWidth": self.windowWidth,
             "regionOfInterest": self.regionOfInterest,
             "regionOfMeasurement": self.regionOfMeasurement,
-            "doubleTargetThreshold": self.doubleTargetThreshold
+            "doubleTargetThreshold": self.doubleTargetThreshold,
+            "surfSizesFile" : self.surfSizesFile
 
         }
         if self.videoFile:
@@ -146,6 +154,13 @@ def loadConfig(path):
     config.regionOfInterest = jsonDict["regionOfInterest"]
     config.regionOfMeasurement = jsonDict["regionOfMeasurement"]
     config.doubleTargetThreshold = jsonDict["doubleTargetThreshold"]
+    config.surfSizesFile = jsonDict["surfSizesFile"]
+
+    sizesJsonFile = open(config.surfSizesFile,"r")
+    sizesJson = json.load(sizesJsonFile)
+    for sizeName in sizesJson:
+        config.surfSizes.append(SizeClass(sizeName, sizesJson[sizeName]))
+    config.surfSizes.sort(key=lambda x: x.min, reverse=True)
     return config
 
 

@@ -1,5 +1,5 @@
 {
-  "sqlConnectString": "Driver={ODBC Driver 17 for SQL Server};Server=localhost;Database=CLAMSIZE;UID=clamsize;PWD=Lobmaster123",
+  "sqlConnectString": "Driver={ODBC Driver 17 for SQL Server};Server=192.168.2.56;Database=CLAMSIZE;UID=clamsize;PWD=Lobmaster123",
   "diagnosticsPort": 5000,
   "contrast": 0,
   "brightness": 0,
@@ -24,14 +24,14 @@
   "surf_hue_H": 80,
   "surf_saturation_H": 255,
   "surf_value_H": 255,
-  "modelPath": "C:\\models\\clam_rcnn_saved_model",
-  "labelsPath": "C:\\models\\clam_rcnn_saved_model\\labels.json",
+  "modelPath": "/home/pyimagesearch/models/clam_rcnn_saved_model",
+  "labelsPath": "/home/pyimagesearch/models/clam_rcnn_saved_model/labels.json",
   "num_classes": 2,
   "min_score": 0.5,
   "real_width": 10.0,
   "real_height": 10.0,
-  "videoFile": "/home/mark/data/clams/test_images/20191030_151122_small.jpg",
-  "cameraID": 0,
+  "videoFile": "C:\\data\\clams\\test_images\\shit.jpg",
+  "cameraID": "nvarguscamerasrc ! video/x-raw(memory:NVMM), width=(int)1920, height=(int)1080,format=(string)NV12, framerate=(fraction)30/1 ! nvvidconv ! video/x-raw, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink",
   "capRate": 0.2,
   "plcPollTime": 0.01,
   "plcIp": "192.168.0.121",
@@ -41,5 +41,6 @@
   "windowWidth": 1000,
   "regionOfInterest": [0.1,0.1,0.9,0.9],
   "regionOfMeasurement": [0.3,0.1,0.7,0.9],
-  "doubleTargetThreshold": 0.05
+  "doubleTargetThreshold": 0.05,
+  "surfSizesFile": "C:\\projects\\clam_detector\\surf_sizes.json"
 }

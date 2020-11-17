@@ -66,7 +66,7 @@ app=Flask(__name__)
 @app.route("/")
 def index():
 	# return the rendered template
-	return render_template("index.html", hue_L=config.hue_L, hue_H=config.hue_H, saturation_L=config.saturation_L, saturation_H=config.saturation_H, value_L=config.value_L, value_H=config.value_H)
+	return render_template("index.html", hue_L=config.hue_L, hue_H=config.hue_H, saturation_L=config.saturation_L, saturation_H=config.saturation_H, value_L=config.value_L, value_H=config.value_H, threshold_L=config.minThreshold, threshold_H=config.maxThreshold, roi_X1=config.regionOfInterest[0]*100, roi_Y1=config.regionOfInterest[1]*100, roi_X2=config.regionOfInterest[2]*100, roi_Y2=config.regionOfInterest[3]*100)
 
 @app.route("/video_feed")
 def video_feed():
@@ -84,6 +84,12 @@ def set_config():
     config.saturation_H = configJson["saturation_H"]
     config.value_L = configJson["value_L"]
     config.value_H = configJson["value_H"]
+    config.minThreshold = configJson["threshold_L"]
+    config.maxThreshold = configJson["threshold_H"]
+    config.regionOfInterest[0] = configJson["roi_X1"]/100
+    config.regionOfInterest[1] = configJson["roi_Y1"]/100
+    config.regionOfInterest[2] = configJson["roi_X2"]/100
+    config.regionOfInterest[3] = configJson["roi_Y2"]/100
     config.showEnhanced = configJson["showEnhanced"]
     return Response(status=200)
 
@@ -119,11 +125,8 @@ def detect():
 
     if config.videoFile:
         cap = cv2.VideoCapture(config.videoFile)
-    elif config.cameraID >= 0:
+    elif config.cameraID:
         cap = cv2.VideoCapture(config.cameraID)
-        cap.set(cv2.CAP_PROP_FPS, 30)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
     stream = VideoGet(cap, config.capRate)
 
@@ -188,13 +191,13 @@ def detect():
             targets = []
             tensorFlowStartTime = time.time()
             imgSteps=clam_grade.preprocess(image_np,config)
-            contours, _ = cv2.findContours(imgSteps[3], cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+            contours, _ = cv2.findContours(imgSteps[4], cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
 
             destImg = imgSteps[config.showEnhanced].copy()
             cv2.rectangle(destImg, fov.regionOfInterestPixels[0], fov.regionOfInterestPixels[1],
                           color=(16, 16, 16), thickness=config.boxThickness)
-            cv2.rectangle(destImg, fov.regionOfMeasurementPixels[0], fov.regionOfMeasurementPixels[1],
-                          color=(16, 64, 64), thickness=config.boxThickness)
+            #cv2.rectangle(destImg, fov.regionOfMeasurementPixels[0], fov.regionOfMeasurementPixels[1],
+            #              color=(16, 64, 64), thickness=config.boxThickness)
             radius = int(destImg.shape[1] * config.doubleTargetThreshold)
             areaStartTime = time.time()
             imageArea = image_np.shape[0]*image_np.shape[1]
@@ -207,18 +210,21 @@ def detect():
                 percentArea = boxArea / imageArea
                 if percentArea >= 0.01 and percentArea <=0.5:
                     boxNormalCenter = ((box[0] + (width / 2))/image_np.shape[0], (box[1] + (height / 2))/image_np.shape[1])
-                    isOfInterest = (boxNormalCenter[0] > config.regionOfInterest[1] and
-                                    boxNormalCenter[0] < config.regionOfInterest[3] and
-                                    boxNormalCenter[1] > config.regionOfInterest[0] and
-                                    boxNormalCenter[1] < config.regionOfInterest[2])
-                    isOfMeasurement = (boxNormalCenter[0] > config.regionOfMeasurement[1] and
-                                       boxNormalCenter[0] < config.regionOfMeasurement[3] and
-                                       boxNormalCenter[1] > config.regionOfMeasurement[0] and
-                                       boxNormalCenter[1] < config.regionOfMeasurement[2])
+                    #isOfInterest = (boxNormalCenter[0] > config.regionOfInterest[1] and
+                    #                boxNormalCenter[0] < config.regionOfInterest[3] and
+                    #                boxNormalCenter[1] > config.regionOfInterest[0] and
+                    #                boxNormalCenter[1] < config.regionOfInterest[2])
+                    #isOfMeasurement = (boxNormalCenter[0] > config.regionOfMeasurement[1] and
+                    #                   boxNormalCenter[0] < config.regionOfMeasurement[3] and
+                    #                   boxNormalCenter[1] > config.regionOfMeasurement[0] and
+                    #                   boxNormalCenter[1] < config.regionOfMeasurement[2])
+                    isOfInterest=True
+                    isOfMeasurement=True
+
                     target = clam_grade.grade(isOfInterest, isOfMeasurement, (box[0]+int(box[2]/2),box[1]+int(box[3]/2)), image_np, destImg, box,
                                               dpsm, config)
                     if not target is None:
-                        targetColor = (32,32,32) if not target.isOfInterest else (255, 255, 0) if target.classification == 2 else (0, 255, 255)
+                        targetColor = (0,255,0) if not target.isOfInterest else (255, 255, 0) if target.classification == 2 else (0, 255, 255)
                         cv2.drawContours(destImg,contours,i,targetColor,thickness=1)
                         cv2.rectangle(destImg,(target.box[0],target.box[1]),(target.box[0]+target.box[2],target.box[1]+target.box[3]),targetColor)
                         cv2.circle(destImg, target.center, radius, (0, 255, 0), thickness=1)

@@ -1,7 +1,18 @@
-import pyodbc
+import requests
+import datetime
 
 def write_clam(config, target):
-    conn = pyodbc.connect(config.sqlConnectString)
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO Clams(Species, AreaMm, AreaPx, PercentRed) VALUES(%d, %f, %d, %f)" % (target.classification, target.areaSquareMm, target.areaPixel, target.percentRed))
-    conn.commit();
+    saveTarget= {
+        "@timestamp": datetime.datetime.now().isoformat(),
+        "species": "surf" if target.classification == 2.0 else "cockle",
+        "areaMm": target.areaSquareMm,
+        "areaPx": target.areaPixel,
+        "redPct": target.percentRed,
+        "sizeGrade": target.sizeGrade,
+        "minRange": target.minRange,
+        "maxRange": target.maxRange
+    }
+    requests.post("http://192.168.2.92:9200/clamsize/_doc",json=saveTarget)
+
+
+

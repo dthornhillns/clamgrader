@@ -83,7 +83,7 @@
     <div class="slidecontainer">
         <table width="100%">
             <tr>
-                <td rowspan="7" class="imageCell"><img width="100%" align="center" src="{{ url_for('video_feed') }}"></td>
+                <td rowspan="13" class="imageCell"><img width="100%" align="center" src="{{ url_for('video_feed') }}"></td>
                 <td class="sliderLabel">Hue LOW (<span id="hue_L_val">{{hue_L}}</span>)</td>
                 <td><input type="range" min="-255" max="255" value="{{hue_L}}" class="slider" id="hue_L"></td>
             </tr>
@@ -93,27 +93,52 @@
             </tr>
             <tr>
                 <td class="sliderLabel">Sat LOW (<span id="saturation_L_val">{{saturation_L}}</span>)</td>
-                <td><input type="range" min="1" max="255" value="{{saturation_L}}" class="slider" id="saturation_L"></td>
+                <td><input type="range" min="0" max="255" value="{{saturation_L}}" class="slider" id="saturation_L"></td>
             </tr>
             <tr>
                 <td class="sliderLabel">Sat HIGH (<span id="saturation_H_val">{{saturation_H}}</span>)</td>
-                <td><input type="range" min="1" max="255" value="{{saturation_H}}" class="slider" id="saturation_H"></td>
+                <td><input type="range" min="0" max="255" value="{{saturation_H}}" class="slider" id="saturation_H"></td>
             </tr>
             <tr>
                 <td class="sliderLabel">Val LOW (<span id="value_L_val">{{value_L}}</span>)</td>
-                <td><input type="range" min="1" max="255" value="{{value_L}}" class="slider" id="value_L"></td>
+                <td><input type="range" min="0" max="255" value="{{value_L}}" class="slider" id="value_L"></td>
             </tr>
             <tr>
                 <td class="sliderLabel">Val HIGH (<span id="value_H_val">{{value_H}}</span>)</td>
-                <td><input type="range" min="1" max="255" value="{{value_H}}" class="slider" id="value_H"></td>
+                <td><input type="range" min="0" max="255" value="{{value_H}}" class="slider" id="value_H"></td>
+            </tr>
+            <tr>
+                <td class="sliderLabel">Threshold LOW (<span id="threshold_L_val">{{threshold_L}}</span>)</td>
+                <td><input type="range" min="0" max="255" value="{{threshold_L}}" class="slider" id="threshold_L"></td>
+            </tr>
+            <tr>
+                <td class="sliderLabel">Threshold HIGH (<span id="threshold_H_val">{{threshold_H}}</span>)</td>
+                <td><input type="range" min="0" max="255" value="{{threshold_H}}" class="slider" id="threshold_H"></td>
+            </tr>
+            <tr>
+                <td class="sliderLabel">ROI X1 (<span id="roi_X1_val">{{roi_X1}}</span>)</td>
+                <td><input type="range" min="0" max="100" value="{{roi_X1}}" class="slider" id="roi_X1"></td>
+            </tr>
+            <tr>
+                <td class="sliderLabel">ROI X2 (<span id="roi_X2_val">{{roi_X2}}</span>)</td>
+                <td><input type="range" min="0" max="100" value="{{roi_X2}}" class="slider" id="roi_X2"></td>
+            </tr>
+            <tr>
+                <td class="sliderLabel">ROI Y1 (<span id="roi_Y1_val">{{roi_Y1}}</span>)</td>
+                <td><input type="range" min="0" max="100" value="{{roi_Y1}}" class="slider" id="roi_Y1"></td>
+            </tr>
+            <tr>
+                <td class="sliderLabel">ROI Y2 (<span id="roi_Y2_val">{{roi_Y2}}</span>)</td>
+                <td><input type="range" min="0" max="100" value="{{roi_Y2}}" class="slider" id="roi_Y2"></td>
             </tr>
             <tr>
                 <td colspan="2">
                     <div class="btn-group">
                         <button onclick="setImage(0)">Original</button>
-                        <button onclick="setImage(1)">Hue</button>
-                        <button onclick="setImage(2)">Threshold</button>
-                        <button onclick="setImage(3)">Blur</button>
+                        <button onclick="setImage(1)">Safe</button>
+                        <button onclick="setImage(2)">Hue</button>
+                        <button onclick="setImage(3)">Threshold</button>
+                        <button onclick="setImage(4)">Blur</button>
                     </div>
                 </td>
                 <td>
@@ -133,12 +158,24 @@
     var slider_saturation_H = document.getElementById("saturation_H");
     var slider_value_L = document.getElementById("value_L");
     var slider_value_H = document.getElementById("value_H");
+    var slider_threshold_L = document.getElementById("threshold_L");
+    var slider_threshold_H = document.getElementById("threshold_H");
+    var slider_roi_X1 = document.getElementById("roi_X1");
+    var slider_roi_X2 = document.getElementById("roi_X2");
+    var slider_roi_Y1 = document.getElementById("roi_Y1");
+    var slider_roi_Y2 = document.getElementById("roi_Y2");
     var hue_L_output=document.getElementById("hue_L_val");
     var hue_H_output=document.getElementById("hue_H_val");
     var saturation_L_output=document.getElementById("saturation_L_val");
     var saturation_H_output=document.getElementById("saturation_H_val");
     var value_L_output=document.getElementById("value_L_val");
     var value_H_output=document.getElementById("value_H_val");
+    var threshold_L_output=document.getElementById("threshold_L_val");
+    var threshold_H_output=document.getElementById("threshold_H_val");
+    var roi_X1_output=document.getElementById("roi_X1_val");
+    var roi_X2_output=document.getElementById("roi_X2_val");
+    var roi_Y1_output=document.getElementById("roi_Y1_val");
+    var roi_Y2_output=document.getElementById("roi_Y2_val");
     var displayImage=0;
 
     slider_hue_L.oninput = function() {
@@ -170,6 +207,31 @@
         value_H_output.innerHTML=this.value;
         sendConfig();
     }
+    slider_threshold_L.oninput = function() {
+        threshold_L_output.innerHTML=this.value;
+        sendConfig();
+    }
+
+    slider_threshold_H.oninput = function() {
+        threshold_H_output.innerHTML=this.value;
+        sendConfig();
+    }
+    slider_roi_X1.oninput = function() {
+        roi_X1_output.innerHTML=this.value;
+        sendConfig();
+    }
+    slider_roi_X2.oninput = function() {
+        roi_X2_output.innerHTML=this.value;
+        sendConfig();
+    }
+    slider_roi_Y1.oninput = function() {
+        roi_Y1_output.innerHTML=this.value;
+        sendConfig();
+    }
+    slider_roi_Y2.oninput = function() {
+        roi_Y2_output.innerHTML=this.value;
+        sendConfig();
+    }
     function setImage(imgIndex) {
         displayImage=imgIndex;
         sendConfig()
@@ -186,6 +248,12 @@
             "saturation_H": parseInt(slider_saturation_H.value),
             "value_L": parseInt(slider_value_L.value),
             "value_H": parseInt(slider_value_H.value),
+            "threshold_L": parseInt(slider_threshold_L.value),
+            "threshold_H": parseInt(slider_threshold_H.value),
+            "roi_X1": parseInt(slider_roi_X1.value),
+            "roi_X2": parseInt(slider_roi_X2.value),
+            "roi_Y1": parseInt(slider_roi_Y1.value),
+            "roi_Y2": parseInt(slider_roi_Y2.value),
             "showEnhanced": displayImage
         });
         xhr.send(data);
