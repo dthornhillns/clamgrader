@@ -1,7 +1,7 @@
 import numpy as np
 import math
 from flask import Response, request
-from flask import Flask
+from flask import Flask, redirect
 from flask import render_template
 from flask import jsonify
 import flask_cors
@@ -66,18 +66,11 @@ args = vars(parser.parse_args())
 configFile = args["config"]
 noDisplay = args["nodisplay"]
 config = cfg.loadConfig(configFile)
-app = Flask(__name__)
+app = Flask(__name__, static_folder="clientapp/dist", static_url_path="/")
 
-
-@app.route("/")
-def index():
-    # return the rendered template
-    return render_template("index.html", hue_L=config.hue_L, hue_H=config.hue_H, saturation_L=config.saturation_L,
-                           saturation_H=config.saturation_H, value_L=config.value_L, value_H=config.value_H,
-                           threshold_L=config.minThreshold, threshold_H=config.maxThreshold,
-                           roi_X1=config.regionOfInterest[0] * 100, roi_Y1=config.regionOfInterest[1] * 100,
-                           roi_X2=config.regionOfInterest[2] * 100, roi_Y2=config.regionOfInterest[3] * 100)
-
+@app.route('/')
+def root():
+    return app.send_static_file('index.html')
 
 @app.route("/video_feed")
 def video_feed():
