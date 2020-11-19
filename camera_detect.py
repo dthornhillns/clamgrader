@@ -4,7 +4,6 @@ from flask import Response, request
 from flask import Flask, redirect
 from flask import render_template
 from flask import jsonify
-import flask_cors
 import cv2
 import clam_grade
 import clam_log

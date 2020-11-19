@@ -66,9 +66,9 @@
       data () {
           return {
               xMin: this.initialXMin*100.0,
-              yMin: this.initialYMin*100.0,
+              yMin: 100.0-(this.initialYMin*100.0),
               xMax: this.initialXMax*100.0,
-              yMax: this.initialYMax*100.0,
+              yMax: 100.0-(this.initialYMax*100.0),
               isMounted: false
           }
       },
@@ -109,7 +109,7 @@
       methods: {
           setBox(boxValues, newValue, oldValue) {
             if(newValue!=oldValue) {
-              console.log(`setbox(${boxValues},${newValue}, ${oldValue})`)
+              console.log(`setbox(${boxValues})`)
               let configData={};
               configData[this.configName] = boxValues;
               this.axios.put("/config", configData);
