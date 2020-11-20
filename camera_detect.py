@@ -183,7 +183,10 @@ def detect():
                               calibrationLR,
                               color=(16, 200, 200), thickness=config.calibrationBoxThickness)
             else:
-                destImg = imgSteps[config.showEnhanced].copy()
+                if config.showEnhanced >=3:
+                    destImg = cv2.cvtColor(imgSteps[config.showEnhanced], cv2.COLOR_GRAY2RGB)
+                else:
+                    destImg = imgSteps[config.showEnhanced].copy()
 
 
             dpsmm = calculateDpsmm(destImg.shape[0], destImg.shape[0], config)
