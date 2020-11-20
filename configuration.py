@@ -136,7 +136,7 @@ def loadConfig(path):
     config.hue_H = jsonDict["hue_H"]
     config.saturation_H = jsonDict["saturation_H"]
     config.value_H = jsonDict["value_H"]
-    config.surf_red_percent = jsonDict["surf_red_percent"]/100
+    config.surf_red_percent = jsonDict["surf_red_percent"]
     config.surf_hue_L = jsonDict["surf_hue_L"]
     config.surf_saturation_L = jsonDict["surf_saturation_L"]
     config.surf_value_L = jsonDict["surf_value_L"]
@@ -161,6 +161,7 @@ def loadConfig(path):
     config.plcEnabled = jsonDict["plcEnabled"]
     config.windowWidth = jsonDict["windowWidth"]
     config.regionOfInterest = jsonDict["regionOfInterest"]
+    config.regionOfMeasurement = jsonDict["regionOfMeasurement"]
     config.doubleTargetThreshold = jsonDict["doubleTargetThreshold"]
     config.surfSizesFile = jsonDict["surfSizesFile"]
     config.calibrationBox = jsonDict["calibrationBox"]

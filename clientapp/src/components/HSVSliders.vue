@@ -1,5 +1,5 @@
 <template>
-  <v-card width="400px">
+  <v-card>
     <v-app-bar elevation="0">{{title}}</v-app-bar>
     <v-card-text>
       <v-container fluid>
@@ -11,7 +11,7 @@
               width="50px"
             ></v-responsive>
           </v-col>
-          <v-col cols="10">
+          <v-col cols="8">
             <v-slider
               v-model="hue"
               :max="180"

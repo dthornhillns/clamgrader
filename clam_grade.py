@@ -91,10 +91,10 @@ def grade(isOfInterest, isOfMeasurement, boxCenter, srcImg, destImg, box, dpsm, 
         boxPixels=objImg.shape[0]*objImg.shape[1]
         percentRed=redCount/boxPixels
 
-        if(percentRed>config.surf_red_percent):
-            category=2.0
+        if percentRed > (config.surf_red_percent / 100.0):
+            category = 2.0
         else:
-            category=1.0
+            category = 1.0
 
         boxColor = (32,32,32) if not isOfInterest else (255, 255, 0) if category == 2.0 else (0, 255, 255)
 

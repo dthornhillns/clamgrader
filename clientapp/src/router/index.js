@@ -1,9 +1,11 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import Configure from "../views/Configure";
 import Calibrate from "../views/Calibrate";
 import SurfConfig from "../views/SurfConfig";
+import Regions from "../views/Regions";
 import Home from "../views/Home";
+import Targets from "../views/Targets";
+import Save from "../views/Save";
 
 Vue.use(VueRouter)
 
@@ -14,9 +16,14 @@ const routes = [
     component: Home
   },
   {
-    path: '/configure/:viewId',
-    name: 'Configure',
-    component: Configure,
+    path: '/regions',
+    name: 'Regions',
+    component: Regions
+  },
+  {
+    path: '/targets/:viewId',
+    name: 'Targets',
+    component: Targets,
     props: true
   },
   {
@@ -29,6 +36,12 @@ const routes = [
     path: '/surf/:viewId',
     name: 'SurfConfig',
     component: SurfConfig,
+    props: true
+  },
+    {
+    path: '/save',
+    name: 'Save',
+    component: Save,
     props: true
   }
 ]
