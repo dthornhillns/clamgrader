@@ -17,6 +17,7 @@ class ClamTarget:
     sizeGrade="unknown"
     minRange=0.0,
     maxRange=10000.0
+    annotation="auto"
 
 def preprocess(origImage, config):
 
@@ -29,12 +30,23 @@ def preprocess(origImage, config):
     enhancedBw = cv.inRange(hueImage, (config.hue_L, config.saturation_L, config.value_L),
                             (config.hue_H, config.saturation_H, config.value_H))
 
-    _, enhancedThreshold = cv.threshold(enhancedBw, config.minThreshold, config.maxThreshold,
+    _, enhancedThreshold = cv.threshold(enhancedBw, config.threshold_L, config.threshold_H,
                                         cv.THRESH_BINARY_INV | cv.THRESH_OTSU)
 
     enhancedBlur = cv.GaussianBlur(enhancedThreshold, (config.blur, config.blur), 0)
 
-    return (origImage, blkImage, hueImage, enhancedBw, enhancedThreshold,enhancedBlur,safeImage)
+    if (config.surf_hue_L < 0):
+        surfBw1 = cv.inRange(origImage, (0, config.surf_saturation_L, config.surf_value_L),
+                             (config.surf_hue_H, config.surf_saturation_H, config.surf_value_H))
+        surfBw2 = cv.inRange(origImage, (180 + config.surf_hue_L, config.surf_saturation_L, config.surf_value_L),
+                             (180, config.surf_saturation_H, config.surf_value_H))
+        surfBw = surfBw1 | surfBw2
+
+    else:
+        surfBw = cv.inRange(origImage, (config.surf_hue_L, config.surf_saturation_L, config.surf_value_L),
+                            (config.surf_hue_H, config.surf_saturation_H, config.surf_value_H))
+
+    return (origImage, blkImage, hueImage, enhancedBw, enhancedThreshold,enhancedBlur,surfBw)
 
 def grade(isOfInterest, isOfMeasurement, boxCenter, srcImg, destImg, box, dpsm, config):
     im_width = srcImg.shape[1]
@@ -63,14 +75,6 @@ def grade(isOfInterest, isOfMeasurement, boxCenter, srcImg, destImg, box, dpsm, 
                 max_area=area
                 max_c=i
     displayImg=objImg
-    if config.showEnhanced== "threshold":
-        displayImg= cv.cvtColor(imgSteps[0], cv.COLOR_GRAY2RGB)
-    elif config.showEnhanced== "bw":
-        displayImg = cv.cvtColor(imgSteps[1], cv.COLOR_GRAY2RGB)
-    elif config.showEnhanced== "hue":
-        displayImg = cv.cvtColor(imgSteps[2], cv.COLOR_GRAY2RGB)
-    elif config.showEnhanced== "blur":
-        displayImg = cv.cvtColor(imgSteps[3], cv.COLOR_GRAY2RGB)
 
     if(max_c>-1):
         clamTarget=ClamTarget()
@@ -79,36 +83,16 @@ def grade(isOfInterest, isOfMeasurement, boxCenter, srcImg, destImg, box, dpsm, 
         cY = int(M["m01"] / M["m00"])
 
         percentRed=0
-        if(config.surf_hue_L<0):
-            surfBw1 = cv.inRange(objImg, (0, config.surf_saturation_L, config.surf_value_L),
-                                 (config.surf_hue_H, config.surf_saturation_H, config.surf_value_H))
-            surfBw2 = cv.inRange(objImg, (180 + config.surf_hue_L, config.surf_saturation_L, config.surf_value_L),
-                                 (180, config.surf_saturation_H, config.surf_value_H))
-            surfBw=surfBw1|surfBw2
+        redCount = cv.countNonZero(imgSteps[6])
+        boxPixels=objImg.shape[0]*objImg.shape[1]
+        percentRed=redCount/boxPixels
 
+        if percentRed > (config.surf_red_percent / 100.0):
+            category = 2.0
         else:
-            surfBw = cv.inRange(objImg, (config.surf_hue_L, config.surf_saturation_L, config.surf_value_L),
-                                (config.surf_hue_H, config.surf_saturation_H, config.surf_value_H))
-
-
-
-
-            redCount = cv.countNonZero(surfBw)
-            boxPixels=objImg.shape[0]*objImg.shape[1]
-            percentRed=redCount/boxPixels
-            if config.showEnhanced == "isSurf":
-                displayImg = cv.cvtColor(surfBw, cv.COLOR_GRAY2RGB)
-
-            if(percentRed>config.surf_red_percent):
-                category=2.0
-            else:
-                category=1.0
-
-        boxColor = (32,32,32) if not isOfInterest else (255, 255, 0) if category == 2.0 else (0, 255, 255)
+            category = 1.0
 
         obj_area=float(max_area) / float(dpsm)
-
-        cv.circle(destImg,boxCenter,3,boxColor,cv.FILLED)
 
         clamTarget.classification=int(category)
         clamTarget.center=boxCenter

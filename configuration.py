@@ -11,8 +11,8 @@ class DetectionConfig:
         self.diagnosticsPort = 5000
         self.contrast = 0
         self.brightness = 0
-        self.minThreshold = 30
-        self.maxThreshold = 60
+        self.threshold_L = 30
+        self.threshold_H = 60
         self.showEnhanced = "original"
         self.channel = 2
         self.blur = 5
@@ -40,8 +40,8 @@ class DetectionConfig:
         # Number of classes to detect
         self.num_classes = 2
         self.min_score = 0.7
-        self.real_width = 10.0
-        self.real_height = 10.0
+        self.real_width = 1000.0
+        self.real_height = 1000.0
         self.videoFile = None
         self.cameraID = None
         self.capRate = 0.02
@@ -53,19 +53,22 @@ class DetectionConfig:
         self.windowWidth = 1600
         self.regionOfInterest = None
         self.regionOfMeasurement = None
-        self.doubleTargetThreshold=0.01,
+        self.doubleTargetThreshold=0.01
         self.surfSizesFile = None
-        self.surfSizes = [];
+        self.surfSizes = []
+        self.calibrationBox = None
+        self.calibrationBoxThickness=3
+        self.writeToElastic = False,
+        self.automaticMeasure = True
 
-    def save(self, path):
-        jsonFile = open(path, "w")
-        data= {
-            "elasticsearch":self.elasticsearch,
+    def getJson(self):
+        data = {
+            "elasticsearch": self.elasticsearch,
             "diagnosticsPort": self.diagnosticsPort,
             "contrast": self.contrast,
             "brightness": self.brightness,
-            "minThreshold": self.minThreshold,
-            "maxThreshold": self.maxThreshold,
+            "threshold_L": self.threshold_L,
+            "threshold_H": self.threshold_H,
             "showEnhanced": self.showEnhanced,
             "channel": self.channel,
             "blur": self.blur,
@@ -98,15 +101,23 @@ class DetectionConfig:
             "regionOfInterest": self.regionOfInterest,
             "regionOfMeasurement": self.regionOfMeasurement,
             "doubleTargetThreshold": self.doubleTargetThreshold,
-            "surfSizesFile" : self.surfSizesFile
+            "surfSizesFile": self.surfSizesFile,
+            "calibrationBox": self.calibrationBox,
+            "calibrationBoxThickness": self.calibrationBoxThickness,
+            "writeToElastic": self.writeToElastic,
+            "automaticMeasure": self.automaticMeasure
 
         }
         if self.videoFile:
-            data["videoFile"]=self.videoFile
+            data["videoFile"] = self.videoFile
         if self.cameraID:
-            data["cameraID"]=self.cameraID
+            data["cameraID"] = self.cameraID
+        return data
 
-        json.dump(data, jsonFile)
+    def save(self, path):
+        jsonFile = open(path, "w")
+        data=self.getJson()
+        json.dump(data, jsonFile,indent=4, sort_keys=True)
 
 def loadConfig(path):
     config = DetectionConfig()
@@ -116,8 +127,8 @@ def loadConfig(path):
     config.diagnosticsPort = jsonDict["diagnosticsPort"]
     config.contrast = jsonDict["contrast"]
     config.brightness = jsonDict["brightness"]
-    config.minThreshold = jsonDict["minThreshold"]
-    config.maxThreshold = jsonDict["maxThreshold"]
+    config.threshold_L = jsonDict["threshold_L"]
+    config.threshold_H = jsonDict["threshold_H"]
     config.showEnhanced = jsonDict["showEnhanced"]
     config.channel = jsonDict["channel"]
     config.blur = jsonDict["blur"]
@@ -127,7 +138,7 @@ def loadConfig(path):
     config.hue_H = jsonDict["hue_H"]
     config.saturation_H = jsonDict["saturation_H"]
     config.value_H = jsonDict["value_H"]
-    config.surf_red_percent = jsonDict["surf_red_percent"]/100
+    config.surf_red_percent = jsonDict["surf_red_percent"]
     config.surf_hue_L = jsonDict["surf_hue_L"]
     config.surf_saturation_L = jsonDict["surf_saturation_L"]
     config.surf_value_L = jsonDict["surf_value_L"]
@@ -155,11 +166,15 @@ def loadConfig(path):
     config.regionOfMeasurement = jsonDict["regionOfMeasurement"]
     config.doubleTargetThreshold = jsonDict["doubleTargetThreshold"]
     config.surfSizesFile = jsonDict["surfSizesFile"]
+    config.calibrationBox = jsonDict["calibrationBox"]
+    config.calibrationBoxThickness = jsonDict["calibrationBoxThickness"]
+    config.writeToElastic = jsonDict["writeToElastic"]
+    config.automaticMeasure = jsonDict["automaticMeasure"]
 
-    sizesJsonFile = open(config.surfSizesFile,"r")
-    sizesJson = json.load(sizesJsonFile)
-    for sizeName in sizesJson:
-        config.surfSizes.append(SizeClass(sizeName, sizesJson[sizeName]))
+    with open(config.surfSizesFile,"r") as sizesJsonFile:
+        sizesJson = json.load(sizesJsonFile)
+        for sizeName in sizesJson:
+            config.surfSizes.append(SizeClass(sizeName, sizesJson[sizeName]))
     config.surfSizes.sort(key=lambda x: x.min, reverse=True)
     return config
 
