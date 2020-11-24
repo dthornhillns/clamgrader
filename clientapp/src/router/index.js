@@ -6,6 +6,7 @@ import Regions from "../views/Regions";
 import Home from "../views/Home";
 import Targets from "../views/Targets";
 import Save from "../views/Save";
+import Camera from "../views/Camera";
 
 Vue.use(VueRouter)
 
@@ -14,6 +15,11 @@ const routes = [
     path: '/',
     name: 'Home',
     component: Home
+  },
+  {
+    path: '/camera',
+    name: 'Camera',
+    component: Camera
   },
   {
     path: '/regions',

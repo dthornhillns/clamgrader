@@ -16,6 +16,8 @@ from video_get import VideoGet
 
 outputFrame = None
 lock = threading.Lock()
+measureNextTargets=False
+measurementAnnotation=""
 
 
 # Helper code
@@ -99,9 +101,23 @@ def get_config():
     data=config.getJson()
     return jsonify(data)
 
+@app.route("/sizes", methods=['GET'])
+def get_sizes():
+    with open(config.surfSizesFile,"r") as file:
+        return file.read()
+
+@app.route("/measure", methods=['POST'])
+def measure():
+    global measureNextTargets, measurementAnnotation
+    measureJson = request.get_json(force=True)
+    measureNextTargets=True
+    measurementAnnotation=measureJson["annotation"]
+    return Response(status=200)
+
 
 class FieldOfView:
     regionOfInterestPixels = ((0, 0), (100, 100))
+    regionOfMeasurementPixels = ((0, 0), (100, 100))
 
 
 def startFlask(config):
@@ -125,7 +141,7 @@ def calculateDpsmm(widthPx, heightPx, config):
 def detect():
     print("Initializing detection")
 
-    global outputFrame, lock, config
+    global outputFrame, lock, config, measurementAnnotation, measureNextTargets
 
     cap = None
     plc = None
@@ -162,6 +178,8 @@ def detect():
         image_np = stream.frame
         # print("Got Frame: %s" % (time.time()))
         currentSampleTime = time.time()
+        measureNextTargetsNotified = measureNextTargets
+        measureNextTargets = False
         writeTargets = False
         if (currentSampleTime - lastSampleTime) >= 2.0:
             writeTargets = True
@@ -188,10 +206,27 @@ def detect():
                 else:
                     destImg = imgSteps[config.showEnhanced].copy()
 
+            roi_ul = (
+                int(config.regionOfInterest[0] * destImg.shape[1]),
+                int(config.regionOfInterest[1] * destImg.shape[0]))
+            roi_lr = (
+                int(config.regionOfInterest[2] * destImg.shape[1]),
+                int(config.regionOfInterest[3] * destImg.shape[0]))
+            rom_ul = (
+                int(config.regionOfMeasurement[0] * destImg.shape[1]),
+                int(config.regionOfMeasurement[1] * destImg.shape[0]))
+            rom_lr = (
+                int(config.regionOfMeasurement[2] * destImg.shape[1]),
+                int(config.regionOfMeasurement[3] * destImg.shape[0]))
+            fov.regionOfInterestPixels = (roi_ul, roi_lr)
+            fov.regionOfMeasurementPixels = (rom_ul, rom_lr)
 
             dpsmm = calculateDpsmm(destImg.shape[0], destImg.shape[0], config)
             cv2.rectangle(destImg, fov.regionOfInterestPixels[0], fov.regionOfInterestPixels[1],
                           color=(16, 16, 16), thickness=config.boxThickness)
+
+            cv2.rectangle(destImg, fov.regionOfMeasurementPixels[0], fov.regionOfMeasurementPixels[1],
+                          color=(200, 200, 200), thickness=config.boxThickness)
 
             radius = int(destImg.shape[1] * config.doubleTargetThreshold)
             areaStartTime = time.time()
@@ -206,16 +241,15 @@ def detect():
                 if percentArea >= 0.01 and percentArea <= 0.5:
 
                     isOfInterest = True
-                    isOfMeasurement = True
+                    center=(box[0] + int(box[2] / 2), box[1] + int(box[3] / 2))
+                    isOfMeasurement = fov.regionOfMeasurementPixels[0][0] <= center[0] and fov.regionOfMeasurementPixels[1][0] >= center[0] and fov.regionOfMeasurementPixels[0][1] <= center[1] and fov.regionOfMeasurementPixels[1][1] >= center[1]
 
                     target = clam_grade.grade(isOfInterest, isOfMeasurement,
-                                              (box[0] + int(box[2] / 2), box[1] + int(box[3] / 2)), image_np, destImg,
+                                              center, image_np, destImg,
                                               box,
                                               dpsmm, config)
                     if not target is None:
-                        targetColor = (0, 255, 0) if not target.isOfInterest else (
-                        255, 255, 0) if target.classification == 2 else (0, 255, 255)
-                        cv2.drawContours(destImg, contours, i, targetColor, thickness=1)
+                        targetColor = (0, 255, 255) if isOfMeasurement and target.classification == 2 else (255, 255, 0) if isOfMeasurement else (128,128,128) if isOfInterest else (32,32,32)
                         cv2.rectangle(destImg, (target.box[0], target.box[1]),
                                       (target.box[0] + target.box[2], target.box[1] + target.box[3]), targetColor)
                         cv2.circle(destImg, target.center, radius, (0, 255, 0), thickness=1)
@@ -224,9 +258,12 @@ def detect():
                                     cv2.FONT_HERSHEY_PLAIN,
                                     fontScale=config.fontScale, color=targetColor,
                                     thickness=1)
-                        if writeTargets:
-                            clam_log.write_clam(config, target)
-
+                        if writeTargets and config.automaticMeasure:
+                            clam_log.write_clam(config, target, imgSteps[0])
+                        if measureNextTargetsNotified:
+                            print("Measuring Targets Adhoc")
+                            target.annotation=measurementAnnotation
+                            clam_log.write_clam(config, target, imgSteps[0])
             frameCount += 1
             stopTime = time.time()
             tensorFlowTime += areaStartTime - tensorFlowStartTime
@@ -249,14 +286,6 @@ def detect():
                             cv2.FONT_HERSHEY_PLAIN,
                             fontScale=config.fontScale, color=(255, 255, 0),
                             thickness=1)
-
-                roi_ul = (
-                    int(config.regionOfInterest[0] * destImg.shape[1]),
-                    int(config.regionOfInterest[1] * destImg.shape[0]))
-                roi_lr = (
-                    int(config.regionOfInterest[2] * destImg.shape[1]),
-                    int(config.regionOfInterest[3] * destImg.shape[0]))
-                fov.regionOfInterestPixels = (roi_ul, roi_lr)
 
                 w1 = destImg.shape[1]
                 h1 = destImg.shape[0]

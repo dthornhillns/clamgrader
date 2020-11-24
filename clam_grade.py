@@ -17,6 +17,7 @@ class ClamTarget:
     sizeGrade="unknown"
     minRange=0.0,
     maxRange=10000.0
+    annotation="auto"
 
 def preprocess(origImage, config):
 
@@ -82,11 +83,6 @@ def grade(isOfInterest, isOfMeasurement, boxCenter, srcImg, destImg, box, dpsm, 
         cY = int(M["m01"] / M["m00"])
 
         percentRed=0
-
-
-
-
-
         redCount = cv.countNonZero(imgSteps[6])
         boxPixels=objImg.shape[0]*objImg.shape[1]
         percentRed=redCount/boxPixels
@@ -96,11 +92,7 @@ def grade(isOfInterest, isOfMeasurement, boxCenter, srcImg, destImg, box, dpsm, 
         else:
             category = 1.0
 
-        boxColor = (32,32,32) if not isOfInterest else (255, 255, 0) if category == 2.0 else (0, 255, 255)
-
         obj_area=float(max_area) / float(dpsm)
-
-        cv.circle(destImg,boxCenter,3,boxColor,cv.FILLED)
 
         clamTarget.classification=int(category)
         clamTarget.center=boxCenter

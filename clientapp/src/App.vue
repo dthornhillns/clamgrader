@@ -13,6 +13,12 @@
             <v-icon>mdi-monitor</v-icon>
           </v-list-item-icon>
         </v-list-item>
+        <v-list-item to="/camera"
+                     :ripple="false">
+          <v-list-item-icon x-large>
+            <v-icon>mdi-camera</v-icon>
+          </v-list-item-icon>
+        </v-list-item>
         <v-list-item to="/regions"
                      :ripple="false">
           <v-list-item-icon x-large>
