@@ -174,6 +174,7 @@ def detect():
 
     lastSampleTime = time.time()
     while True:
+        time.sleep(config.capRate)
         # Read frame from camera
         image_np = stream.frame
         # print("Got Frame: %s" % (time.time()))
@@ -245,22 +246,25 @@ def detect():
                     isOfMeasurement = fov.regionOfMeasurementPixels[0][0] <= center[0] and fov.regionOfMeasurementPixels[1][0] >= center[0] and fov.regionOfMeasurementPixels[0][1] <= center[1] and fov.regionOfMeasurementPixels[1][1] >= center[1]
 
                     target = clam_grade.grade(isOfInterest, isOfMeasurement,
-                                              center, image_np, destImg,
+                                              center, image_np, imgSteps,
                                               box,
+                                              contours,
+                                              i,
                                               dpsmm, config)
                     if not target is None:
+                        cv2.drawContours(destImg, contours,i,(255,0,0))
                         targetColor = (0, 255, 255) if isOfMeasurement and target.classification == 2 else (255, 255, 0) if isOfMeasurement else (128,128,128) if isOfInterest else (32,32,32)
                         cv2.rectangle(destImg, (target.box[0], target.box[1]),
                                       (target.box[0] + target.box[2], target.box[1] + target.box[3]), targetColor)
                         cv2.circle(destImg, target.center, radius, (0, 255, 0), thickness=1)
                         cv2.putText(destImg, "RED: %.1f    AREA: %.1f" % (
-                            target.percentRed * 100, target.areaSquareMm), (target.box[0], target.box[1]),
+                            target.percentRed * 100, target.pixelAreaMm), (target.box[0], target.box[1]),
                                     cv2.FONT_HERSHEY_PLAIN,
                                     fontScale=config.fontScale, color=targetColor,
                                     thickness=1)
-                        if writeTargets and config.automaticMeasure:
+                        if writeTargets and config.automaticMeasure and isOfMeasurement:
                             clam_log.write_clam(config, target, imgSteps[0])
-                        if measureNextTargetsNotified:
+                        if measureNextTargetsNotified and isOfMeasurement:
                             print("Measuring Targets Adhoc")
                             target.annotation=measurementAnnotation
                             clam_log.write_clam(config, target, imgSteps[0])

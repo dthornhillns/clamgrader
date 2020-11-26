@@ -5,19 +5,23 @@ import PIL
 
 
 class ClamTarget:
-    id=0
-    center=(0,0)
-    box=[0,0,0,0]
-    classification=0
-    areaPixel=0
-    areaSquareMm=0.0
-    isOfInterest=False
-    isOfMeasurement=False
-    percentRed=0.0,
-    sizeGrade="unknown"
-    minRange=0.0,
-    maxRange=10000.0
-    annotation="auto"
+    id = 0
+    center = (0,0)
+    box = [0,0,0,0]
+    classification = 0
+    pixelAreaPx = 0
+    contourAreaPx = 0
+    pixelAreaMm = 0.0
+    contourAreaMm = 0.0
+    isOfInterest = False
+    isOfMeasurement = False
+    percentRed = 0.0
+    redAreaPx = 0
+    sizeGrade = "unknown"
+    minRange = 0.0
+    maxRange = 10000.0
+    annotation = "auto"
+    dpsm = 0.0
 
 def preprocess(origImage, config):
 
@@ -48,72 +52,55 @@ def preprocess(origImage, config):
 
     return (origImage, blkImage, hueImage, enhancedBw, enhancedThreshold,enhancedBlur,surfBw)
 
-def grade(isOfInterest, isOfMeasurement, boxCenter, srcImg, destImg, box, dpsm, config):
+def grade(isOfInterest, isOfMeasurement, boxCenter, srcImg, imgSteps, box, contours,contourIndex, dpsm, config):
     im_width = srcImg.shape[1]
     im_height = srcImg.shape[0]
     tile_x1 = max(int(box[0])-2,0)
     tile_y1 = max(int(box[1])-2,0)
     tile_x2 = min(int(box[2]+box[0])+2,im_width)
     tile_y2 = min(int(box[3]+box[1])+2,im_height)
-    safe_w=(config.regionOfInterest[0]-config.regionOfInterest[2])*im_width
-    safe_h=(config.regionOfInterest[1]-config.regionOfInterest[3])*im_height
-    safeArea=(int)(safe_w*safe_h)
-    objImg = srcImg[tile_y1:tile_y2, tile_x1:tile_x2].copy()
-    objImageArea= objImg.shape[0] * objImg.shape[1]
-    max_acceptable_area=0.75*objImageArea
-    imgSteps = preprocess(objImg, config)
+    blkImage = np.zeros(shape=(tile_y2-tile_y1,tile_x2-tile_x1), dtype=np.uint8)
+    cv.drawContours(blkImage,contours,contourIndex,color=(255),thickness=-1,offset=(-tile_x1,-tile_y1))
+    pixelCount = np.sum(blkImage == 255).item()
+    contourArea = cv.contourArea(contours[contourIndex])
+    clamTarget = ClamTarget()
+    redImage = imgSteps[6][tile_y1:tile_y2, tile_x1:tile_x2].copy()
+    redImageMasked = cv.bitwise_and(redImage,blkImage)
+    redCount = cv.countNonZero(redImageMasked)
+    percentRed = redCount/pixelCount
 
-    cnt, _ = cv.findContours(imgSteps[3],cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE)
+    if percentRed > (config.surf_red_percent / 100.0):
+        category = 2.0
+    else:
+        category = 1.0
 
-    max_c=-1
-    max_area=0
+    contourAreaMm = float(contourArea) / float(dpsm)
+    pixelAreaMm = float(pixelCount) / float(dpsm)
 
-    if(safeArea*0.75>objImageArea):
-        for i in range(len(cnt)):
-            area = cv.contourArea(cnt[i])
-            if(area>max_area and area<=max_acceptable_area):
-                max_area=area
-                max_c=i
-    displayImg=objImg
+    clamTarget.classification=int(category)
+    clamTarget.center=boxCenter
+    clamTarget.contourAreaPx=contourArea
+    clamTarget.pixelAreaPx=pixelCount
+    clamTarget.contourAreaMm=contourAreaMm
+    clamTarget.pixelAreaMm=pixelAreaMm
+    clamTarget.isOfInterest=isOfInterest
+    clamTarget.isOfMeasurement=isOfMeasurement
+    clamTarget.box=box
+    clamTarget.percentRed=percentRed
+    clamTarget.redAreaPx=redCount
+    clamTarget.dpsm=dpsm
+    if clamTarget.classification==2.0:
+        maxRange=1000000.0
+        for size in config.surfSizes:
+            if size.min<clamTarget.pixelAreaMm:
+                clamTarget.minRange=size.min
+                clamTarget.maxRange=maxRange
+                clamTarget.sizeGrade=size.name
+                break
+            else:
+                maxRange=size.min
 
-    if(max_c>-1):
-        clamTarget=ClamTarget()
-        M = cv.moments(cnt[max_c])
-        cX = int(M["m10"] / M["m00"])
-        cY = int(M["m01"] / M["m00"])
-
-        percentRed=0
-        redCount = cv.countNonZero(imgSteps[6])
-        boxPixels=objImg.shape[0]*objImg.shape[1]
-        percentRed=redCount/boxPixels
-
-        if percentRed > (config.surf_red_percent / 100.0):
-            category = 2.0
-        else:
-            category = 1.0
-
-        obj_area=float(max_area) / float(dpsm)
-
-        clamTarget.classification=int(category)
-        clamTarget.center=boxCenter
-        clamTarget.areaSquareMm=obj_area
-        clamTarget.areaPixel=max_area
-        clamTarget.isOfInterest=isOfInterest
-        clamTarget.isOfMeasurement=isOfMeasurement
-        clamTarget.box=box
-        clamTarget.percentRed=percentRed
-        if clamTarget.classification==2.0:
-            maxRange=1000000.0
-            for size in config.surfSizes:
-                if size.min<clamTarget.areaSquareMm:
-                    clamTarget.minRange=size.min
-                    clamTarget.maxRange=maxRange
-                    clamTarget.sizeGrade=size.name
-                    break
-                else:
-                    maxRange=size.min
-
-        return clamTarget
+    return clamTarget
 
 
 
