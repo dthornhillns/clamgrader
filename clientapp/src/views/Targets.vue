@@ -10,7 +10,7 @@
                             :initial-hue="config.hue_L"
                             :initial-sat="config.saturation_L"
                             :initial-lev="config.value_L"
-                            :initia-threshold="config.threshold_L"
+                            :initial-threshold="config.threshold_L"
                             title="Low"
                             suffix="_L"
                             class="ma-4">
@@ -22,7 +22,7 @@
                             :initial-hue="config.hue_H"
                             :initial-sat="config.saturation_H"
                             :initial-lev="config.value_H"
-                            :initia-threshold="config.threshold_H"
+                            :initial-threshold="config.threshold_H"
                             title="High"
                             suffix="_H"
                             class="ma-4">
@@ -59,9 +59,6 @@ export default {
             await this.axios.put("/config",{
                 showEnhanced: this.localViewId
             });
-        },
-        async saveConfig() {
-            await this.axios.post("/config");
         }
     }
 }

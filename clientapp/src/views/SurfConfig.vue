@@ -10,7 +10,7 @@
                         :initial-hue="config.surf_hue_L"
                         :initial-sat="config.surf_saturation_L"
                         :initial-lev="config.surf_value_L"
-                        :initia-threshold="config.surf_threshold_L"
+                        :initial-threshold="config.surf_threshold_L"
                         title="Low" prefix="surf_" suffix="_L"
                         v-bind:use-threshold="false"
                     class="ma-4"/>
@@ -21,7 +21,7 @@
                         :initial-hue="config.surf_hue_H"
                         :initial-sat="config.surf_saturation_H"
                         :initial-lev="config.surf_value_H"
-                        :initia-threshold="config.surf_threshold_H"
+                        :initial-threshold="config.surf_threshold_H"
                         title="High" prefix="surf_" suffix="_H"
                         v-bind:use-threshold="false"
                         class="ma-4"/>

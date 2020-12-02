@@ -72,7 +72,7 @@ class DetectionConfig:
             "showEnhanced": self.showEnhanced,
             "channel": self.channel,
             "blur": self.blur,
-            "value_L": self.hue_L,
+            "value_L": self.value_L,
             "hue_L": self.hue_L,
             "saturation_L": self.saturation_L,
             "hue_H": self.hue_H,
