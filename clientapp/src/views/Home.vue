@@ -1,6 +1,6 @@
 <template>
     <v-content  class="ma-0 pa-0">
-        <v-img max-height="90%" src="/video_feed" contain></v-img>
+        <v-img max-height="900px" src="/video_feed" contain></v-img>
     </v-content>
 </template>
 
