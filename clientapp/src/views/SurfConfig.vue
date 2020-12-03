@@ -41,6 +41,7 @@
                               hint="xyz"
                               persistent-hint
                               vertical
+                              @change="onRedPercent($event)"
                             >
                             </v-slider>
                         </v-card-text>
@@ -71,24 +72,20 @@ export default {
         this.percentRed = this.config.surf_red_percent;
         this.setDisplay();
     },
-    watch: {
-        percentRed: function(newVal, oldVal) {
-            this.setConfig("surf_red_percent",newVal, oldVal)
-        }
-    },
     methods: {
         async setDisplay() {
             await this.axios.put("/config",{
                 showEnhanced: this.localViewId
             });
         },
-        setConfig(name, newValue, oldValue) {
-          if(newValue!=oldValue) {
-            console.log(`setConfig(${name},${newValue},${oldValue})`)
+        onRedPercent(newValue) {
+            this.setConfig("surf_red_percent",newValue)
+        },
+        setConfig(name, newValue) {
+            console.log(`setConfig(${name},${newValue})`)
             let configData={};
             configData[name] = newValue;
             this.axios.put("/config", configData);
-          }
         }
     }
 }
