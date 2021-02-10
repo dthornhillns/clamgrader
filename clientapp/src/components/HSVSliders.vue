@@ -20,6 +20,7 @@
               class="align-center ma-2"
               :hint="hue.toString()"
               persistent-hint
+              @change="setHue($event)"
             >
             </v-slider>
           </v-col>
@@ -40,6 +41,7 @@
               class="align-center ma-2"
               :hint="sat.toString()"
               persistent-hint
+              @change="setSat($event)"
             >
             </v-slider>
           </v-col>
@@ -60,6 +62,7 @@
               class="align-right ma-2"
               :hint="val.toString()"
               persistent-hint
+              @change="setVal($event)"
             >
             </v-slider>
           </v-col>
@@ -80,6 +83,7 @@
               class="align-right ma-2"
               :hint="threshold.toString()"
               persistent-hint
+              @change="setThreshold($event)"
             >
             </v-slider>
           </v-col>
@@ -128,42 +132,40 @@
         },
         data () {
             return {
-                hue: Math.floor(((this.initialHue)/255)*180),
-                sat: Math.floor((this.initialSat/255)*100),
-                val: Math.floor((this.initialLev/255)*100),
-                threshold: Math.floor((this.initialThreshold/255)*100),
-                isMounted: false
+                hue: 0.0,
+                sat: 0.0,
+                val: 0.0,
+                threshold: 0.0
             }
         },
-      watch: {
-        hue: function(newValue, oldValue) {
-            let convertedNewVal=Math.floor(((newValue)/180)*255);
-            this.setConfig(`${this.prefix}hue${this.suffix}`,convertedNewVal,newValue,oldValue);
-          },
-        sat: function(newValue, oldValue) {
-            let convertedNewVal=Math.floor((newValue/100)*255);
-            this.setConfig(`${this.prefix}saturation${this.suffix}`,convertedNewVal,newValue,oldValue);
-          },
-        val: function(newValue, oldValue) {
-            let convertedNewVal=Math.floor((newValue/100)*255);
-            this.setConfig(`${this.prefix}value${this.suffix}`,convertedNewVal,newValue,oldValue);
-          },
-        threshold: function(newValue, oldValue) {
-            let convertedNewVal=Math.floor((newValue/100)*255);
-            this.setConfig(`${this.prefix}threshold${this.suffix}`,convertedNewVal,newValue,oldValue);
-          }
-      },
       mounted() {
-        this.isMounted = true;
+          this.hue = Math.floor(((this.initialHue)/255)*180);
+          this.sat = Math.floor((this.initialSat/255)*100);
+          this.val = Math.floor((this.initialLev/255)*100);
+          this.threshold = Math.floor((this.initialThreshold/255)*100);
       },
       methods: {
-        setConfig(name,convertedNewValue, newValue, oldValue) {
-          if(newValue!=oldValue) {
-            console.log(`setConfig(${name},${convertedNewValue},${newValue},${oldValue})`)
-            let configData={};
-            configData[name] = convertedNewValue;
-            this.axios.put("/config", configData);
-          }
+        setHue(newValue) {
+          let convertedNewVal=Math.floor(((newValue)/180)*255);
+          this.setConfig(`${this.prefix}hue${this.suffix}`,convertedNewVal,newValue);
+        },
+        setSat(newValue) {
+          let convertedNewVal=Math.floor((newValue/100)*255);
+          this.setConfig(`${this.prefix}saturation${this.suffix}`,convertedNewVal,newValue);
+        },
+        setVal(newValue) {
+          let convertedNewVal=Math.floor((newValue/100)*255);
+          this.setConfig(`${this.prefix}value${this.suffix}`,convertedNewVal,newValue);
+        },
+        setThreshold(newValue) {
+          let convertedNewVal=Math.floor((newValue/100)*255);
+          this.setConfig(`${this.prefix}threshold${this.suffix}`,convertedNewVal,newValue);
+        },
+        async setConfig(name,convertedNewValue, newValue) {
+          console.log(`setConfig(${name},${convertedNewValue},${newValue})`)
+          let configData={};
+          configData[name] = convertedNewValue;
+          await this.axios.put("/config", configData);
         }
       }
     }

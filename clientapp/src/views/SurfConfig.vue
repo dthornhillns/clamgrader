@@ -10,7 +10,7 @@
                         :initial-hue="config.surf_hue_L"
                         :initial-sat="config.surf_saturation_L"
                         :initial-lev="config.surf_value_L"
-                        :initia-threshold="config.surf_threshold_L"
+                        :initial-threshold="config.surf_threshold_L"
                         title="Low" prefix="surf_" suffix="_L"
                         v-bind:use-threshold="false"
                     class="ma-4"/>
@@ -21,7 +21,7 @@
                         :initial-hue="config.surf_hue_H"
                         :initial-sat="config.surf_saturation_H"
                         :initial-lev="config.surf_value_H"
-                        :initia-threshold="config.surf_threshold_H"
+                        :initial-threshold="config.surf_threshold_H"
                         title="High" prefix="surf_" suffix="_H"
                         v-bind:use-threshold="false"
                         class="ma-4"/>
@@ -41,6 +41,7 @@
                               hint="xyz"
                               persistent-hint
                               vertical
+                              @change="onRedPercent($event)"
                             >
                             </v-slider>
                         </v-card-text>
@@ -71,24 +72,20 @@ export default {
         this.percentRed = this.config.surf_red_percent;
         this.setDisplay();
     },
-    watch: {
-        percentRed: function(newVal, oldVal) {
-            this.setConfig("surf_red_percent",newVal, oldVal)
-        }
-    },
     methods: {
         async setDisplay() {
             await this.axios.put("/config",{
                 showEnhanced: this.localViewId
             });
         },
-        setConfig(name, newValue, oldValue) {
-          if(newValue!=oldValue) {
-            console.log(`setConfig(${name},${newValue},${oldValue})`)
+        onRedPercent(newValue) {
+            this.setConfig("surf_red_percent",newValue)
+        },
+        setConfig(name, newValue) {
+            console.log(`setConfig(${name},${newValue})`)
             let configData={};
             configData[name] = newValue;
             this.axios.put("/config", configData);
-          }
         }
     }
 }

@@ -15,6 +15,7 @@
                   vertical
                   persistent-hint
                   height="100px"
+                  @change="onYMin($event)"
                 >
                 </v-slider>
               </v-col>
@@ -29,6 +30,7 @@
                   vertical
                   persistent-hint
                   height="100px"
+                  @change="onYMax($event)"
                 >
                 </v-slider>
               </v-col>
@@ -41,6 +43,7 @@
                   class="align-center ma-2"
                   :hint="xMax.toString()"
                   persistent-hint
+                  @change="onXMax($event)"
                 >
                 </v-slider>
                      <v-slider
@@ -51,6 +54,7 @@
                   class="align-center ma-2"
                   :hint="xMin.toString()"
                   persistent-hint
+                  @change="onXMin($event)"
                 >
                 </v-slider>
               </v-col>
@@ -65,11 +69,10 @@
       name: "RegionSliders",
       data () {
           return {
-              xMin: this.initialXMin*100.0,
-              yMin: 100.0-(this.initialYMin*100.0),
-              xMax: this.initialXMax*100.0,
-              yMax: 100.0-(this.initialYMax*100.0),
-              isMounted: false
+              xMin: 0.0,
+              yMin: 100.0,
+              xMax: 0.0,
+              yMax: 100.0
           }
       },
       props: {
@@ -88,32 +91,31 @@
           type: Number
         }
       },
-      watch: {
-        yMin: function (newValue,oldValue) {
-          this.setBox([this.xMin/100.0,(100-newValue)/100.0,this.xMax/100.0,(100-this.yMax)/100.0],newValue, oldValue);
-        },
-        yMax: function (newValue,oldValue) {
-          this.setBox([this.xMin/100.0,(100-this.yMin)/100.0,this.xMax/100.0,(100-newValue)/100.0],newValue, oldValue);
-        },
-        xMin: function (newValue,oldValue) {
-          this.setBox([newValue/100.0,(100-this.yMin)/100.0,this.xMax/100.0,(100-this.yMax)/100.0],newValue, oldValue);
-        },
-        xMax: function (newValue,oldValue) {
-          this.setBox([this.xMin/100.0,(100-this.yMin)/100.0,newValue/100.0,(100-this.yMax)/100.0],newValue, oldValue);
-        },
-      },
       mounted() {
-        this.isMounted = true;
+        this.xMin = this.initialXMin*100.0,
+        this.yMin = 100.0-(this.initialYMin*100.0),
+        this.xMax = this.initialXMax*100.0,
+        this.yMax = 100.0-(this.initialYMax*100.0),
         console.log(`region(${this.xMin},${this.yMin},${this.xMax},${this.yMax})`)
       },
       methods: {
-          setBox(boxValues, newValue, oldValue) {
-            if(newValue!=oldValue) {
-              console.log(`setbox(${boxValues})`)
-              let configData={};
-              configData[this.configName] = boxValues;
-              this.axios.put("/config", configData);
-            }
+          onYMin(newValue) {
+            this.setBox([this.xMin/100.0,(100-newValue)/100.0,this.xMax/100.0,(100-this.yMax)/100.0]);
+          },
+          onYMax(newValue) {
+            this.setBox([this.xMin/100.0,(100-this.yMin)/100.0,this.xMax/100.0,(100-newValue)/100.0]);
+          },
+          onXMin(newValue) {
+            this.setBox([newValue/100.0,(100-this.yMin)/100.0,this.xMax/100.0,(100-this.yMax)/100.0]);
+          },
+          onXMax(newValue) {
+            this.setBox([this.xMin/100.0,(100-this.yMin)/100.0,newValue/100.0,(100-this.yMax)/100.0]);
+          },
+          setBox(boxValues) {
+            console.log(`setbox(${boxValues})`)
+            let configData={};
+            configData[this.configName] = boxValues;
+            this.axios.put("/config", configData);
           }
       }
     }

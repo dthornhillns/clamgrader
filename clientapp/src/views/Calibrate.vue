@@ -44,9 +44,6 @@ export default {
             await this.axios.put("/config",{
                 showEnhanced: this.localViewId
             });
-        },
-        async saveConfig() {
-            await this.axios.post("/config");
         }
     }
 }

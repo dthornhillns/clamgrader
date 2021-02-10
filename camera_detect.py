@@ -231,7 +231,7 @@ def detect():
             fov.regionOfInterestPixels = (roi_ul, roi_lr)
             fov.regionOfMeasurementPixels = (rom_ul, rom_lr)
 
-            dpsmm = calculateDpsmm(destImg.shape[0], destImg.shape[0], config)
+            dpsmm = calculateDpsmm(destImg.shape[0], destImg.shape[1], config)
             cv2.rectangle(destImg, fov.regionOfInterestPixels[0], fov.regionOfInterestPixels[1],
                           color=(16, 16, 16), thickness=config.boxThickness)
 
@@ -261,7 +261,8 @@ def detect():
                                               i,
                                               dpsmm, config, saveNextSubframesNotified)
                     if not target is None:
-                        cv2.drawContours(destImg, contours,i,(255,0,0))
+                        if target.isOfMeasurement:
+                            cv2.drawContours(destImg, contours,i,(255,0,0))
                         targetColor = (0, 255, 255) if isOfMeasurement and target.classification == 2 else (255, 255, 0) if isOfMeasurement else (128,128,128) if isOfInterest else (32,32,32)
                         cv2.rectangle(destImg, (target.box[0], target.box[1]),
                                       (target.box[0] + target.box[2], target.box[1] + target.box[3]), targetColor)
