@@ -1,6 +1,7 @@
 import cv2 as cv
 import numpy as np
 import PIL
+from datetime import datetime
 
 
 
@@ -52,7 +53,8 @@ def preprocess(origImage, config):
 
     return (origImage, blkImage, hueImage, enhancedBw, enhancedThreshold,enhancedBlur,surfBw)
 
-def grade(isOfInterest, isOfMeasurement, boxCenter, srcImg, imgSteps, box, contours,contourIndex, dpsm, config):
+
+def grade(isOfInterest, isOfMeasurement, boxCenter, srcImg, imgSteps, box, contours,contourIndex, dpsm, config, saveSubframe):
     im_width = srcImg.shape[1]
     im_height = srcImg.shape[0]
     tile_x1 = max(int(box[0])-2,0)
@@ -61,6 +63,8 @@ def grade(isOfInterest, isOfMeasurement, boxCenter, srcImg, imgSteps, box, conto
     tile_y2 = min(int(box[3]+box[1])+2,im_height)
     blkImage = np.zeros(shape=(tile_y2-tile_y1,tile_x2-tile_x1), dtype=np.uint8)
     cv.drawContours(blkImage,contours,contourIndex,color=(255),thickness=-1,offset=(-tile_x1,-tile_y1))
+    if(saveSubframe):
+        cv.imwrite("%s/clam_%s_%d.jpg" % (config.subframeDir,datetime.now().strftime("%d%m%Y_%H%M%S"), contourIndex), blkImage, [cv.IMWRITE_JPEG_QUALITY, 90])
     pixelCount = np.sum(blkImage == 255).item()
     contourArea = cv.contourArea(contours[contourIndex])
     clamTarget = ClamTarget()

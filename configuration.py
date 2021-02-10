@@ -59,7 +59,8 @@ class DetectionConfig:
         self.calibrationBox = None
         self.calibrationBoxThickness=3
         self.writeToElastic = False,
-        self.automaticMeasure = True
+        self.automaticMeasure = True,
+        self.subframeDir="";
 
     def getJson(self):
         data = {
@@ -105,7 +106,8 @@ class DetectionConfig:
             "calibrationBox": self.calibrationBox,
             "calibrationBoxThickness": self.calibrationBoxThickness,
             "writeToElastic": self.writeToElastic,
-            "automaticMeasure": self.automaticMeasure
+            "automaticMeasure": self.automaticMeasure,
+            "subframeDir": self.subframeDir
 
         }
         if self.videoFile:
@@ -170,6 +172,7 @@ def loadConfig(path):
     config.calibrationBoxThickness = jsonDict["calibrationBoxThickness"]
     config.writeToElastic = jsonDict["writeToElastic"]
     config.automaticMeasure = jsonDict["automaticMeasure"]
+    config.subframeDir = jsonDict["subframeDir"]
 
     with open(config.surfSizesFile,"r") as sizesJsonFile:
         sizesJson = json.load(sizesJsonFile)

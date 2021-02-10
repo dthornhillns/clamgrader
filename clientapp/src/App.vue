@@ -50,6 +50,12 @@
             <v-icon>mdi-ruler-square</v-icon>
           </v-list-item-icon>
         </v-list-item>
+        <v-list-item @click="captureSubframes()"
+                :ripple="false">
+          <v-list-item-icon x-large>
+            <v-icon>mdi-image</v-icon>
+          </v-list-item-icon>
+        </v-list-item>
         <v-list-item to="/save"
                 :ripple="false">
           <v-list-item-icon x-large>
@@ -68,10 +74,12 @@
 <script>
   export default {
     methods: {
-       async saveConfig() {
-            await this.axios.post("/config");
-        }
+      async saveConfig() {
+        await this.axios.post("/config");
+      },
+      async captureSubframes() {
+        await this.axios.post("/subframe");
+      }
     }
-
   }
 </script>

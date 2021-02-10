@@ -1,8 +1,7 @@
 import numpy as np
 import math
 from flask import Response, request
-from flask import Flask, redirect
-from flask import render_template
+from flask import Flask, redirect, send_file, make_response,render_template
 from flask import jsonify
 import cv2
 import clam_grade
@@ -18,6 +17,7 @@ outputFrame = None
 lock = threading.Lock()
 measureNextTargets=False
 measurementAnnotation=""
+saveNextSubframes=False
 
 
 # Helper code
@@ -114,6 +114,13 @@ def measure():
     measurementAnnotation=measureJson["annotation"]
     return Response(status=200)
 
+@app.route("/subframe", methods=['POST'])
+def subframeCapture():
+    global saveNextSubframes
+    # wait until the lock is acquired
+    saveNextSubframes=True
+    return Response(status=200)
+
 
 class FieldOfView:
     regionOfInterestPixels = ((0, 0), (100, 100))
@@ -141,7 +148,7 @@ def calculateDpsmm(widthPx, heightPx, config):
 def detect():
     print("Initializing detection")
 
-    global outputFrame, lock, config, measurementAnnotation, measureNextTargets
+    global outputFrame,rawOutputFrame, lock, config, measurementAnnotation, measureNextTargets, saveNextSubframes
 
     cap = None
     plc = None
@@ -180,7 +187,9 @@ def detect():
         # print("Got Frame: %s" % (time.time()))
         currentSampleTime = time.time()
         measureNextTargetsNotified = measureNextTargets
+        saveNextSubframesNotified = saveNextSubframes
         measureNextTargets = False
+        saveNextSubframes = False
         writeTargets = False
         if (currentSampleTime - lastSampleTime) >= 2.0:
             writeTargets = True
@@ -206,7 +215,7 @@ def detect():
                     destImg = cv2.cvtColor(imgSteps[config.showEnhanced], cv2.COLOR_GRAY2RGB)
                 else:
                     destImg = imgSteps[config.showEnhanced].copy()
-
+            rawOutputFrame=destImg.copy()
             roi_ul = (
                 int(config.regionOfInterest[0] * destImg.shape[1]),
                 int(config.regionOfInterest[1] * destImg.shape[0]))
@@ -250,7 +259,7 @@ def detect():
                                               box,
                                               contours,
                                               i,
-                                              dpsmm, config)
+                                              dpsmm, config, saveNextSubframesNotified)
                     if not target is None:
                         cv2.drawContours(destImg, contours,i,(255,0,0))
                         targetColor = (0, 255, 255) if isOfMeasurement and target.classification == 2 else (255, 255, 0) if isOfMeasurement else (128,128,128) if isOfInterest else (32,32,32)
