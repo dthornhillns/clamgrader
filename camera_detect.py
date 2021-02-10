@@ -148,7 +148,7 @@ def calculateDpsmm(widthPx, heightPx, config):
 def detect():
     print("Initializing detection")
 
-    global outputFrame,rawOutputFrame, lock, config, measurementAnnotation, measureNextTargets, saveNextSubframes
+    global outputFrame, lock, config, measurementAnnotation, measureNextTargets, saveNextSubframes
 
     cap = None
     plc = None
