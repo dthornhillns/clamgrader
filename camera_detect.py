@@ -11,6 +11,7 @@ import time
 import plc_integration
 import threading
 import configuration as cfg
+import tensorflow as tf
 from video_get import VideoGet
 
 outputFrame = None
@@ -18,6 +19,7 @@ lock = threading.Lock()
 measureNextTargets=False
 measurementAnnotation=""
 saveNextSubframes=False
+
 
 
 # Helper code
@@ -169,6 +171,13 @@ def detect():
 
     if config.plcEnabled:
         plc.start()
+    tf.device("/GPU:0")
+    interpreter = tf.lite.Interpreter(config.modelPath)
+    interpreter.allocate_tensors()
+    inputDetails=interpreter.get_input_details()
+    outputDetails=interpreter.get_output_details()
+    inputShape=inputDetails[0]['shape']
+
 
     # Detection
 
@@ -259,7 +268,13 @@ def detect():
                                               box,
                                               contours,
                                               i,
-                                              dpsmm, config, saveNextSubframesNotified)
+                                              dpsmm,
+                                              config,
+                                              saveNextSubframesNotified,
+                                              inputShape,
+                                              inputDetails,
+                                              outputDetails,
+                                              interpreter)
                     if not target is None:
                         if target.isOfMeasurement:
                             cv2.drawContours(destImg, contours,i,(255,0,0))
@@ -267,8 +282,8 @@ def detect():
                         cv2.rectangle(destImg, (target.box[0], target.box[1]),
                                       (target.box[0] + target.box[2], target.box[1] + target.box[3]), targetColor)
                         cv2.circle(destImg, target.center, radius, (0, 255, 0), thickness=1)
-                        cv2.putText(destImg, "RED: %.1f    AREA: %.1f" % (
-                            target.percentRed * 100, target.pixelAreaMm), (target.box[0], target.box[1]),
+                        cv2.putText(destImg, "RED: %.1f    AREA: %.1f   OVERLAP: %.1f   SINGLE: %.1f" % (
+                            target.percentRed * 100, target.pixelAreaMm, target.overlapConfidence, target.singleConfidence), (target.box[0], target.box[1]),
                                     cv2.FONT_HERSHEY_PLAIN,
                                     fontScale=config.fontScale, color=targetColor,
                                     thickness=1)

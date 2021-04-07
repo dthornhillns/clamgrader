@@ -1,6 +1,5 @@
 import cv2 as cv
 import numpy as np
-import PIL
 from datetime import datetime
 
 
@@ -16,7 +15,9 @@ class ClamTarget:
     contourAreaMm = 0.0
     isOfInterest = False
     isOfMeasurement = False
-    percentRed = 0.0
+    percentRed = 0.0,
+    overlapConfidence = 0.0
+    singleConfidence = 0.0
     redAreaPx = 0
     sizeGrade = "unknown"
     minRange = 0.0
@@ -54,7 +55,7 @@ def preprocess(origImage, config):
     return (origImage, blkImage, hueImage, enhancedBw, enhancedThreshold,enhancedBlur,surfBw)
 
 
-def grade(isOfInterest, isOfMeasurement, boxCenter, srcImg, imgSteps, box, contours,contourIndex, dpsm, config, saveSubframe):
+def grade(isOfInterest, isOfMeasurement, boxCenter, srcImg, imgSteps, box, contours,contourIndex, dpsm, config, saveSubframe, inputShape, inputDetails, outputDetails, interpreter):
     im_width = srcImg.shape[1]
     im_height = srcImg.shape[0]
     tile_x1 = max(int(box[0])-2,0)
@@ -63,11 +64,25 @@ def grade(isOfInterest, isOfMeasurement, boxCenter, srcImg, imgSteps, box, conto
     tile_y2 = min(int(box[3]+box[1])+2,im_height)
     blkImage = np.zeros(shape=(tile_y2-tile_y1,tile_x2-tile_x1), dtype=np.uint8)
     cv.drawContours(blkImage,contours,contourIndex,color=(255),thickness=-1,offset=(-tile_x1,-tile_y1))
-    if(saveSubframe):
+    if saveSubframe and isOfMeasurement:
         cv.imwrite("%s/clam_%s_%d.jpg" % (config.subframeDir,datetime.now().strftime("%d%m%Y_%H%M%S"), contourIndex), blkImage, [cv.IMWRITE_JPEG_QUALITY, 90])
+
+
+    clamTarget = ClamTarget()
+    if isOfMeasurement:
+        multchanBlkImage = cv.cvtColor(blkImage, cv.COLOR_GRAY2RGB)
+        inputImage=cv.resize(multchanBlkImage, (inputShape[1],inputShape[2]))
+        interpreter.set_tensor(inputDetails[0]['index'],[inputImage])
+        interpreter.invoke()
+        outputData=interpreter.get_tensor(outputDetails[0]['index'])
+        clamTarget.singleConfidence=outputData[0][0]/255.0
+        clamTarget.overlapConfidence=outputData[0][1]/255.0
+    else:
+        clamTarget.singleConfidence = 0
+        clamTarget.overlapConfidence = 0
+
     pixelCount = np.sum(blkImage == 255).item()
     contourArea = cv.contourArea(contours[contourIndex])
-    clamTarget = ClamTarget()
     redImage = imgSteps[6][tile_y1:tile_y2, tile_x1:tile_x2].copy()
     redImageMasked = cv.bitwise_and(redImage,blkImage)
     redCount = cv.countNonZero(redImageMasked)
