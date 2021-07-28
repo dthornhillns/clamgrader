@@ -11,7 +11,7 @@ import time
 import plc_integration
 import threading
 import configuration as cfg
-import tensorflow as tf
+import tflite_runtime.interpreter as tflite
 from video_get import VideoGet
 
 outputFrame = None
@@ -171,8 +171,7 @@ def detect():
 
     if config.plcEnabled:
         plc.start()
-    tf.device("/GPU:0")
-    interpreter = tf.lite.Interpreter(config.modelPath)
+    interpreter = tflite.Interpreter(config.modelPath, experimental_delegates=[tflite.load_delegate('libedgetpu.so.1')])
     interpreter.allocate_tensors()
     inputDetails=interpreter.get_input_details()
     outputDetails=interpreter.get_output_details()
