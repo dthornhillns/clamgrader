@@ -29,7 +29,10 @@ def write_clam(config, target, img):
             "centerX": target.center[0],
             "centerY": target.center[1],
             "redPctThreshold": config.surf_red_percent/100.0,
-            "annotation":target.annotation
+            "annotation":target.annotation,
+            "overlapConfidence":target.overlapConfidence,
+            "singleConfidence":target.singleConfidence,
+            "isSingle": True if target.singleConfidence>target.overlapConfidence else False
         }
         try:
             requests.post(config.elasticsearch,json=saveTarget)
