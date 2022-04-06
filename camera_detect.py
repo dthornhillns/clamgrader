@@ -69,7 +69,7 @@ args = vars(parser.parse_args())
 configFile = args["config"]
 noDisplay = args["nodisplay"]
 config = cfg.loadConfig(configFile)
-app = Flask(__name__, static_folder="clientapp/dist", static_url_path="/")
+app = Flask(__name__, static_folder="clientapp/dist", static_url_path="/", instance_path="/home/mhilchie/PycharmProjects/Clam_Grader")
 
 @app.route('/')
 def root():
